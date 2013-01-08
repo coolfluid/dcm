@@ -228,7 +228,7 @@ BOOST_AUTO_TEST_CASE( test_euler_2d )
 
   Handle<solver::PDE> euler = model->add_pde( /*name*/  "euler",
                                               /*type*/  "cf3.sdm.equations.euler.Euler2D",
-                                              /*order*/ 4 );
+                                              /*order*/ 1 );
 
   euler->options().set("gamma",1.4);
   euler->options().set("R",287.05);
@@ -304,24 +304,26 @@ BOOST_AUTO_TEST_CASE( test_euler_2d )
 //  Handle<solver::PDESolver> solver = model->add_solver( euler,
 //                                                        "cf3.sdm.solver.erkls.TwoSstar",
 //                                                        "cf3.solver.ImposeCFL" );
-//  Handle<solver::PDESolver> solver = model->add_solver( euler,
-//                                                        "cf3.sdm.solver.erk.MidPoint",
-//                                                        "cf3.solver.ImposeCFL" );
-  Handle<solver::PDESolver> solver = model->add_solver( euler,
-                                                        "cf3.sdm.solver.lusgs.BDF1",
-                                                        "cf3.solver.ImposeCFL" );
+ Handle<solver::PDESolver> solver = model->add_solver( euler,
+                                                       "cf3.sdm.solver.erk.MidPoint",
+                                                       "cf3.solver.ImposeCFL" );
+ solver->time_step_computer()->options().set("cfl",0.9);
+ 
+  // Handle<solver::PDESolver> solver = model->add_solver( euler,
+  //                                                       "cf3.sdm.solver.lusgs.BDF1",
+  //                                                       "cf3.solver.ImposeCFL" );
 //  solver->options().set("order",4);
-  solver->time_step_computer()->options().set("cfl",std::string("min(1.,0.1*(i+1))"));
-  std::vector<Real> Qref(euler->nb_eqs());
-  Qref[0] = 1.4;
-  Qref[1] = 500;
-  Qref[2] = 500;
-  Qref[3] = 1e5;
-  solver->get_child("jacobian")->options().set("reference_solution",Qref);
-  solver->options().set("max_sweeps",50);
-  solver->options().set("convergence_level",1e-5);
-  solver->options().set("recompute_lhs_frequency",1);
-  solver->options().set("debug",true);
+  // solver->time_step_computer()->options().set("cfl",std::string("min(1.,0.1*(i+1))"));
+  // std::vector<Real> Qref(euler->nb_eqs());
+  // Qref[0] = 1.4;
+  // Qref[1] = 500;
+  // Qref[2] = 500;
+  // Qref[3] = 1e5;
+  // solver->get_child("jacobian")->options().set("reference_solution",Qref);
+  // solver->options().set("max_sweeps",50);
+  // solver->options().set("convergence_level",1e-5);
+  // solver->options().set("recompute_lhs_frequency",1);
+  // solver->options().set("debug",true);
 
   // ---------------------------------------------------------------------------------------
   //      TIME STEPPING
@@ -330,23 +332,20 @@ BOOST_AUTO_TEST_CASE( test_euler_2d )
   model->time_stepping()->options().set("end_time",0.008);
   model->time_stepping()->options().set("time_step",0.001);
 
-  try {
   while ( model->time_stepping()->not_finished() )
   {
     model->time_stepping()->do_step();
     mesh->write_mesh(URI("file:euler2d_"+model->time_stepping()->options()["step"].value_str()+".plt"), std::vector<URI>(1,euler->solution()->uri()));
   }
-  }
-  catch(...){}
 
   // ---------------------------------------------------------------------------------------
   //      WRITE SOLUTION
   // ---------------------------------------------------------------------------------------
-
+  CFinfo << "Writing final solution" << CFendl;
   std::vector<URI> fields;
   fields.push_back(euler->solution()->uri());
-  fields.push_back(euler->fields()->get_child("rhs")->uri());
-  fields.push_back(euler->fields()->get_child("residual")->uri());
+  // fields.push_back(euler->fields()->get_child_checked("rhs")->uri());
+  // fields.push_back(euler->fields()->get_child_checked("residual")->uri());
   mesh->write_mesh(URI("file:euler2d.plt"), fields);
   mesh->write_mesh(URI("file:euler2d.msh"), fields);
   CFinfo << mesh->tree() << CFendl;
