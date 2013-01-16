@@ -7,7 +7,7 @@ model   = cf.root.create_component('accousticpulse_2d','cf3.sdm.Model');
 mesh = model.domain.load_mesh(file = cf.URI('../../../resources/square100-quad-p2-50x50.msh'), name = 'square')
 
 ### Add the Partial Differential Equations to solve
-lineuler = model.add_pde(name='lineuler',type='cf3.sdm.lineuler.LinEulerUniform2D',order=4)
+lineuler = model.add_pde(name='lineuler',type='cf3.sdm.equations.lineuler.LinEulerUniform2D',order=4)
 lineuler.gamma = 1.
 lineuler.U0 = [0.5,0]
 lineuler.rho0 = 1
@@ -15,10 +15,10 @@ lineuler.p0 = 1
 
 ### Add BC
 lineuler.add_bc( name='farfield',
-                 type='cf3.sdm.lineuler.BCFarfield2D',
+                 type='cf3.sdm.equations.lineuler.BCFarfield2D',
                  regions=[ mesh.topology.left, mesh.topology.bottom, mesh.topology.top ] )
 lineuler.add_bc( name='outlet',
-                 type='cf3.sdm.lineuler.BCThompsonUniform2D',
+                 type='cf3.sdm.equations.lineuler.BCExtrapolation2D',
                  regions=[ mesh.topology.right ] )
 
 ### Initialize the solution
@@ -32,12 +32,12 @@ model.tools.init_field.init_field(
 
 ### Create the Solver for the Partial Differential Equations
 solver = model.add_solver(pde=lineuler)
-solver.children.time_step.cfl = 0.2
-solver.children.scheme.nb_stages = 3
+solver.children.time_step_computer.cfl = 0.2
+solver.options.order = 3
 
 ### Time Stepping
-model.time_stepping.end_time = 90
-model.time_stepping.time_step = 10
+model.time_stepping.end_time = 1 #90
+model.time_stepping.time_step = 1 #10
 
 while not model.time_stepping.properties.finished :
     model.time_stepping.do_step()
@@ -64,7 +64,7 @@ while not model.time_stepping.properties.finished :
 # POST-PROCESSING
 #######################################
 
-compute_char = model.tools.create_component('compute_characteristics','cf3.sdm.lineuler.ComputeCharacteristicVariablesUniform2D')
+compute_char = model.tools.create_component('compute_characteristics','cf3.sdm.equations.lineuler.ComputeCharacteristicVariablesUniform2D')
 compute_char.options().set('normal',[1.,0.])
 compute_char.options().set('field',lineuler.solution)
 compute_char.options().set('c0',1.)

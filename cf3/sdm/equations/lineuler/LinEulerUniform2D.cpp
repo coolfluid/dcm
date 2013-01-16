@@ -29,7 +29,7 @@ LinEulerUniform2D::LinEulerUniform2D ( const std::string& name  ) :
   PDE ( name )
 {
   // properties
-  properties()["brief"] = std::string("Euler 1D LinEulerUniform2D");
+  properties()["brief"] = std::string("Linearized Euler 2D with uniform mean flow");
   properties()["description"] = std::string("Component that can solve the 1D Euler physics right-hand-side");
 
   options().add("gamma",1.4).mark_basic()
@@ -45,7 +45,7 @@ LinEulerUniform2D::LinEulerUniform2D ( const std::string& name  ) :
   m_nb_eqs = 4;
 
   add_time();
-  add_term("terms","cf3.sdm.lineuler.TermsUniform2D");
+  add_term("terms","cf3.sdm.equations.lineuler.TermsUniform2D");
 }
 
 ////////////////////////////////////////////////////////////////////////////////
