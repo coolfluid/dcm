@@ -18,11 +18,11 @@ load_balance.options().set("mesh",mesh)
 load_balance.execute()
 
 ### Add PDE
-euler = model.add_pde(name='euler',type='cf3.sdm.euler.Euler2D',order=3)
+euler = model.add_pde(name='euler',type='cf3.sdm.equations.euler.Euler2D',order=3)
 euler.gamma = 1.4
 euler.R = 287.05
 
-euler.add_bc(name='mirror',type='cf3.sdm.euler.BCMirror2D',regions=
+euler.add_bc(name='mirror',type='cf3.sdm.equations.euler.BCMirror2D',regions=
 [ mesh.topology.left, mesh.topology.right, mesh.topology.top, mesh.topology.bottom ])
 
 ### Initial solution
@@ -33,9 +33,8 @@ model.tools.init_field.init_field( field=euler.solution, functions =
 ] )
 
 ### Solve
-solver = model.add_solver(pde=euler)
-solver.children.scheme.nb_stages=2
-solver.children.time_step.cfl=0.3
+solver = model.add_solver(pde=euler,solver='cf3.sdm.solver.erk.MidPoint')
+solver.children.time_step_computer.cfl=0.3
 solver.solve_time_step(0.008)
 
 mesh.write_mesh(file=cf.URI('file:euler-shocktube-2d.msh'), fields=[euler.solution.uri()])

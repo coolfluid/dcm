@@ -22,7 +22,7 @@ rhoE_inf = p_inf/(gamma-1) + 0.5 * rho_inf * u_inf**2
 #p_inf = (g-1) * ( rhoE - 0.5 * rho * ( u**2 ) )
 
 ### Add the Partial Differential Equations to solve
-euler = model.add_pde(name='euler',type='cf3.sdm.equations.euler.Euler2D',order=4)
+euler = model.add_pde(name='euler',type='cf3.sdm.equations.euler.Euler2D',order=2)
 euler.gamma = gamma
 euler.R = R
 
@@ -49,19 +49,19 @@ model.tools.init_field.init_field(
 
 ### Create the Solver for the Partial Differential Equations
 solver = model.add_solver(pde=euler)
-solver.children.time_step.cfl = 0.2
-solver.children.scheme.nb_stages = 3
+solver.children.time_step_computer.cfl = 0.5
+solver.options.order = 3
+
 
 solution  = euler.fields.solution
 post_proc = euler.fields.create_field(name='post_proc',
-                                    variables='U[vec],p[1],T[1],M[1],Pt[1],Tt[1],Cp[1],S[1]')
+                                      variables='U[vec],p[1],T[1],M[1],Pt[1],Tt[1],Cp[1],S[1]')
 
 ### Time Stepping
-#for i in range(1) :
-
-for i in range(2) :
-
-  solver.solve_iterations(1000)
+if True:
+  # solver.solve_iterations(500)
+  solver.solve_time_step(1)
+  
   for index in range(len(solution)) :
      # compute variables per solution point
      rho=solution[index][0];
@@ -88,8 +88,8 @@ for i in range(2) :
      post_proc[index][8] = S;
 
 
-  # mesh.write_mesh( file=cf.URI('file:euler-cylinder-2d-'+str(euler.time.current_time)+'.msh'),
-  #                    fields=[solution.uri(),post_proc.uri(),euler.fields.dt.uri()])
+  mesh.write_mesh( file=cf.URI('file:euler-cylinder-2d-'+str(euler.time.current_time)+'.msh'),
+                   fields=[solution.uri(),post_proc.uri(),euler.fields.dt.uri()])
   
 #### Configure timestepping
 #solver.Time.end_time = 3000000
