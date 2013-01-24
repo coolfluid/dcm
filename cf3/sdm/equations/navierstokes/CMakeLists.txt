@@ -3,6 +3,20 @@
 list( APPEND coolfluid_sdm_equations_navierstokes_files
   LibNavierStokes.hpp
   LibNavierStokes.cpp
+  NavierStokes1D.hpp
+  NavierStokes1D.cpp
+  NavierStokes2D.hpp
+  NavierStokes2D.cpp
+  Terms1D.hpp
+  Terms1D.cpp
+  Terms2D.hpp
+  Terms2D.cpp
+  HLLE.cpp
+  HLLE.hpp
+  Roe.cpp
+  Roe.hpp
+  Rusanov.cpp
+  Rusanov.hpp
 )
 coolfluid_mark_not_orphan(
 
@@ -30,6 +44,6 @@ coolfluid_mark_not_orphan(
 
 coolfluid3_add_library( TARGET  coolfluid_sdm_equations_navierstokes
                         SOURCES ${coolfluid_sdm_equations_navierstokes_files}
-                        LIBS    coolfluid_sdm_core coolfluid_physics_navierstokes
+                        LIBS    coolfluid_sdm_equations_euler coolfluid_physics_navierstokes
                         PLUGINS Physics )
 
