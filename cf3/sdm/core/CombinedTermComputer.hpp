@@ -156,7 +156,10 @@ bool CombinedTermComputer<TERM>::loop_cells(const Handle<mesh::Entities const>& 
   // Set BR2 coefficient alpha to 1/order when alpha is negative
   m_alpha = options().template value<Real>("alpha");
   if (m_alpha < 0)
-    m_alpha = 1./(Real)m_sf->order();
+  {
+    m_alpha = 1./((Real)m_sf->order()+1.); // P0 --> solution is order 1
+                                           //    --> alpha = 1.
+  }
 
 
   // Create cellconnectivity
@@ -230,7 +233,6 @@ bool CombinedTermComputer<TERM>::loop_cells(const Handle<mesh::Entities const>& 
 template <typename TERM >
 void CombinedTermComputer<TERM>::compute_term(const Uint elem_idx, std::vector<RealVector>& term, std::vector<Real>& wave_speed)
 {
-
   // ---------------------------------------------------------------------------
   //                     COMPUTE CELL METRICS AND CONNECTIVITY
   // ---------------------------------------------------------------------------
@@ -419,7 +421,6 @@ void CombinedTermComputer<TERM>::compute_term(const Uint elem_idx, std::vector<R
       {
         m_avg_flx_pt_gradvars[m_face_pts[face_nb][f]] += m_neighbor_flx_pt_gradvars[m_face_pts[face_nb][f]];
         m_avg_flx_pt_gradvars[m_face_pts[face_nb][f]] *= 0.5;
-
         m_avg_flx_pt_gradvars_grad[m_face_pts[face_nb][f]] += m_neighbor_flx_pt_gradvars_grad[m_face_pts[face_nb][f]];
         m_avg_flx_pt_gradvars_grad[m_face_pts[face_nb][f]] += m_alpha*m_LambdaL[m_face_pts[face_nb][f]];
         m_avg_flx_pt_gradvars_grad[m_face_pts[face_nb][f]] += m_alpha*m_LambdaR[m_face_pts[face_nb][f]];
@@ -436,13 +437,11 @@ void CombinedTermComputer<TERM>::compute_term(const Uint elem_idx, std::vector<R
     // -----------------------------------------------------------------------------------
     //   COMPUTE MAPPED FLUX IN INTERNAL FLUX POINTS IN DIRECTION 1_KSI, 1_ETA, OR 1_ZTA
     // -----------------------------------------------------------------------------------
-    // computed wave_speed will be one of the following:
-    //   ax*(dy*dz)  if  flux is in 1_KSI direction
-    //   ay*(dx*dz)  if  flux is in 1_ETA direction
-    //   az*(dx*dy)  if  flux is in 1_ZTA direction
-    // ax , dx  are  wave speed  and  cell length in KSI direction
-    // ay , dy  are  wave speed  and  cell length in ETA direction
-    // az , dz  are  wave speed  and  cell length in ZTA direction
+    // computed wave_speed will be the maximum of convective and diffusive wave speeds
+    //                    KSI           ETA         ZTA
+    //   - convective:  ax / dx       ay / dy     az / dz
+    //   - diffusive:   mu / dx^2     mu / dy^2   mu / dz^2
+
     boost_foreach (Uint flx_pt, m_sf->interior_flx_pts())
     {
       m_term->compute_phys_data( /*in*/  m_metrics->flx_pt_coords(flx_pt),
@@ -465,11 +464,19 @@ void CombinedTermComputer<TERM>::compute_term(const Uint elem_idx, std::vector<R
       m_flx_pt_flux[flx_pt]  = m_convective_flux;
       m_flx_pt_flux[flx_pt] -= m_diffusive_flux;
 
-      m_flx_pt_wave_speed[flx_pt] = std::max(m_convective_wave_speed,m_diffusive_wave_speed);
-
-      // Rescale flux and wavespeed because of transformation to mapped coordinate system
+      // Rescale flux because of transformation to mapped coordinate system
       m_flx_pt_flux[flx_pt]       *= m_metrics->flx_pt_Jvec_abs(flx_pt);
-      m_flx_pt_wave_speed[flx_pt] *= m_metrics->flx_pt_Jvec_abs(flx_pt);
+
+      // Convective wavespeed --> a/dx
+      m_convective_wave_speed *= m_metrics->flx_pt_Jvec_abs(flx_pt);
+      m_convective_wave_speed /= m_metrics->flx_pt_Jdet(flx_pt);
+
+      // Diffusive wavespeed  --> mu/dx2
+      m_diffusive_wave_speed *= m_metrics->flx_pt_Jvec_abs(flx_pt)*m_metrics->flx_pt_Jvec_abs(flx_pt);
+      m_diffusive_wave_speed /= m_metrics->flx_pt_Jdet(flx_pt)*m_metrics->flx_pt_Jdet(flx_pt);
+
+      // Take max of both
+      m_flx_pt_wave_speed[flx_pt] = std::max(m_convective_wave_speed,m_diffusive_wave_speed);
     }
 
 
@@ -531,11 +538,19 @@ void CombinedTermComputer<TERM>::compute_term(const Uint elem_idx, std::vector<R
           m_flx_pt_flux[flx_pt] -= m_diffusive_flux;
         }
 
-        m_flx_pt_wave_speed[flx_pt] = std::max(m_convective_wave_speed,m_diffusive_wave_speed);
+        // Rescale flux because of transformation to mapped coordinate system
+        m_flx_pt_flux[flx_pt] *= m_metrics->flx_pt_Jvec_abs(flx_pt);
 
-        // Rescale flux and wavespeed because of transformation to mapped coordinate system:
-        m_flx_pt_flux[flx_pt]       *= m_metrics->flx_pt_Jvec_abs(flx_pt);
-        m_flx_pt_wave_speed[flx_pt] *= m_metrics->flx_pt_Jvec_abs(flx_pt);
+        // Convective wavespeed --> a/dx
+        m_convective_wave_speed *= m_metrics->flx_pt_Jvec_abs(flx_pt);
+        m_convective_wave_speed /= m_metrics->flx_pt_Jdet(flx_pt);
+
+        // Diffusive wavespeed  --> mu/dx2
+        m_diffusive_wave_speed *= m_metrics->flx_pt_Jvec_abs(flx_pt)*m_metrics->flx_pt_Jvec_abs(flx_pt);
+        m_diffusive_wave_speed /= m_metrics->flx_pt_Jdet(flx_pt)*m_metrics->flx_pt_Jdet(flx_pt);
+
+        // Take max of both
+        m_flx_pt_wave_speed[flx_pt] = std::max(m_convective_wave_speed,m_diffusive_wave_speed);
       }
     } // end for face_nb
 
@@ -564,16 +579,11 @@ void CombinedTermComputer<TERM>::compute_term(const Uint elem_idx, std::vector<R
     // ---------------------------------------------------------------------------
     //                   COMPUTE WAVE SPEEDS IN SOLUTION POINTS
     // ---------------------------------------------------------------------------
-    // computed wave_speed will be of form:  ax/dx + ay/dy + az/dz
-    // ax , dx  are  wave speed  and  cell length in KSI direction
-    // ay , dy  are  wave speed  and  cell length in ETA direction
-    // az , dz  are  wave speed  and  cell length in ZTA direction
     wave_speed.resize(m_nb_sol_pts);
     for (Uint sol_pt=0; sol_pt<m_nb_sol_pts; ++sol_pt)
     {
       m_sol_pt_wave_speed_vector[sol_pt].setZero();
       wave_speed[sol_pt] = 0;
-      // following assembles:  ax*(dy*dz) + ay*(dx*dz) + az*(dx*dy)
       for (Uint d=0; d<NDIM; ++d)
       {
         boost_foreach( Uint flx_pt, m_metrics->line_interpolation_from_flx_pts_to_sol_pt(sol_pt,d).used_points() )
@@ -583,8 +593,6 @@ void CombinedTermComputer<TERM>::compute_term(const Uint elem_idx, std::vector<R
         }
         wave_speed[sol_pt] += m_sol_pt_wave_speed_vector[sol_pt][d];
       }
-      // following divides:  ( ax*(dy*dz) + ay*(dx*dz) + az*(dx*dy)  )  /  (dx*dy*dz)
-      wave_speed[sol_pt] /= m_metrics->sol_pt_Jdet(sol_pt);
     }
   } // end TERM::ENABLE_CONVECTION || TERM::ENABLE_DIFFUSION
 
