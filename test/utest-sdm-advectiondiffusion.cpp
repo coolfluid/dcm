@@ -5,7 +5,7 @@
 // See doc/lgpl.txt and doc/gpl.txt for the license text.
 
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE "Test module for cf3::sdm"
+#define BOOST_TEST_MODULE "Test module for cf3::sdm::equations::advectiondiffusion"
 
 
 #include <boost/test/unit_test.hpp>
@@ -89,7 +89,7 @@ BOOST_AUTO_TEST_CASE( init_mpi )
 
 ////////////////////////////////////////////////////////////////////////////////
 
-BOOST_AUTO_TEST_CASE( test_advectiondiffusion_1d )
+BOOST_AUTO_TEST_CASE( test_advection_1d )
 {
   // Create simulation model
   Handle<sdm::Model> model = Core::instance().root().create_component<sdm::Model>("model1d");
@@ -165,6 +165,86 @@ BOOST_AUTO_TEST_CASE( test_advectiondiffusion_1d )
   std::vector<URI> fields;
   fields.push_back(pde->solution()->uri());
   mesh->write_mesh(URI("file:advection1d.plt"), fields);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+BOOST_AUTO_TEST_CASE( test_diffusion_1d )
+{
+  // Create simulation model
+  Handle<sdm::Model> model = Core::instance().root().create_component<sdm::Model>("model1d");
+
+  // ---------------------------------------------------------------------------------------
+  //      CREATE MESH
+  // ---------------------------------------------------------------------------------------
+
+  Uint dim = 1;
+  Handle<Mesh>          mesh           = model->domain()->create_component<Mesh>("mesh");
+  Handle<MeshGenerator> mesh_generator = model->tools()->create_component("mesh_generator","cf3.mesh.SimpleMeshGenerator")->handle<MeshGenerator>();
+  mesh_generator->options().set("mesh",mesh->uri());
+  mesh_generator->options().set("nb_cells",std::vector<Uint>(dim,33));
+  mesh_generator->options().set("lengths",std::vector<Real>(dim,10));
+  mesh_generator->execute();
+  allocate_component<LoadBalance>("repartitioner")->transform(mesh);
+  
+  // ---------------------------------------------------------------------------------------
+  //      CREATE PHYSICS
+  // ---------------------------------------------------------------------------------------
+
+  Handle<solver::PDE> pde = model->add_pde( /*name*/  "advectiondiffusion",
+                                            /*type*/  "cf3.sdm.equations.advectiondiffusion.AdvectionDiffusion1D",
+                                            /*order*/ 3 );
+  pde->options().set("a",0.);
+  pde->options().set("mu",1.);
+
+  std::vector< Handle<Component> > bc_regions;
+  bc_regions.push_back( mesh->access_component("topology/xneg") );
+  bc_regions.push_back( mesh->access_component("topology/xpos") );
+  // Handle<solver::BC> bc_mirror = pde->add_bc("mirror","cf3.sdm.equations.advectiondiffusion.BCMirror1D",bc_regions);
+
+  // ---------------------------------------------------------------------------------------
+  //      INITIALISE SOLUTION
+  // ---------------------------------------------------------------------------------------
+
+  for (Uint n=0; n<pde->fields()->size(); ++n)
+  {
+    Real& x = pde->solution()->coordinates()[n][0];
+    Real& q = pde->solution()->array()[n][0];
+    if (x < 5.)
+      q = 5.;
+    else
+      q = -5.;
+  }
+
+  // ---------------------------------------------------------------------------------------
+  //      SOLVE WITH RUNGEKUTTA
+  // ---------------------------------------------------------------------------------------
+
+  Handle<solver::PDESolver> solver = model->add_solver( pde,
+                                                        "cf3.sdm.solver.erkls.TwoSstar",
+                                                        "cf3.solver.ImposeCFL" );
+  solver->options().set("order",3);
+  solver->time_step_computer()->options().set("cfl",0.25);
+
+  // ---------------------------------------------------------------------------------------
+  //      TIME STEPPING
+  // ---------------------------------------------------------------------------------------
+  
+  model->time_stepping()->options().set("end_time",5.);
+  model->time_stepping()->options().set("time_step",1.);
+  
+  while ( model->time_stepping()->not_finished() )
+  {
+    model->time_stepping()->do_step();
+    mesh->write_mesh(URI("file:diffusion1d_"+model->time_stepping()->options()["step"].value_str()+".plt"), std::vector<URI>(1,pde->solution()->uri()));
+  }
+
+  // ---------------------------------------------------------------------------------------
+  //      WRITE SOLUTION
+  // ---------------------------------------------------------------------------------------
+  std::vector<URI> fields;
+  fields.push_back(pde->solution()->uri());
+  mesh->write_mesh(URI("file:diffusion1d.plt"), fields);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

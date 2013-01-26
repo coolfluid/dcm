@@ -35,6 +35,7 @@ public:
 public: // types
 
   enum { ENABLE_CONVECTION = true };
+  enum { ENABLE_DIFFUSION  = true };
 
   struct DATA {
     Real q;       // solution variable

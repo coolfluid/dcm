@@ -54,7 +54,13 @@ void Terms1D::get_variables( const mesh::Space& space,
     vars[0] += C * solution()->array()[nodes[n]][0];
   }
   gradvars[0] = vars[0];
-  gradvars_grad[0] = 0.;
+  gradvars_grad.setZero();
+  boost_foreach( Uint n, gradient[0].used_points() )
+  {
+    const Real C = gradient[0].coeff(n);
+    gradvars_grad(0,0) += C * solution()->array()[nodes[n]][0];
+  }
+  gradvars_grad = jacobian_inverse*gradvars_grad;
 }
 
 void Terms1D::set_phys_data_constants( DATA& phys_data )
