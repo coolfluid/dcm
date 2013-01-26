@@ -5,8 +5,12 @@ list( APPEND coolfluid_sdm_equations_advectiondiffusion_files
   LibAdvectionDiffusion.cpp
   AdvectionDiffusion1D.hpp
   AdvectionDiffusion1D.cpp
+  AdvectionDiffusion2D.hpp
+  AdvectionDiffusion2D.cpp
   Terms1D.hpp
   Terms1D.cpp
+  Terms2D.hpp
+  Terms2D.cpp
 )
 
 coolfluid3_add_library( TARGET  coolfluid_sdm_equations_advectiondiffusion

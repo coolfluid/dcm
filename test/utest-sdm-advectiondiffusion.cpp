@@ -84,7 +84,7 @@ BOOST_AUTO_TEST_CASE( init_mpi )
 {
   PE::Comm::instance().init(m_argc,m_argv);
   Core::instance().environment().options().set("log_level", (Uint)INFO);
-  Core::instance().environment().options().set("exception_backtrace", false);
+  Core::instance().environment().options().set("exception_backtrace", true);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -92,7 +92,7 @@ BOOST_AUTO_TEST_CASE( init_mpi )
 BOOST_AUTO_TEST_CASE( test_advection_1d )
 {
   // Create simulation model
-  Handle<sdm::Model> model = Core::instance().root().create_component<sdm::Model>("model1d");
+  Handle<sdm::Model> model = Core::instance().root().create_component<sdm::Model>("adv1d");
 
   // ---------------------------------------------------------------------------------------
   //      CREATE MESH
@@ -172,7 +172,7 @@ BOOST_AUTO_TEST_CASE( test_advection_1d )
 BOOST_AUTO_TEST_CASE( test_diffusion_1d )
 {
   // Create simulation model
-  Handle<sdm::Model> model = Core::instance().root().create_component<sdm::Model>("model1d");
+  Handle<sdm::Model> model = Core::instance().root().create_component<sdm::Model>("diff1d");
 
   // ---------------------------------------------------------------------------------------
   //      CREATE MESH
@@ -245,6 +245,174 @@ BOOST_AUTO_TEST_CASE( test_diffusion_1d )
   std::vector<URI> fields;
   fields.push_back(pde->solution()->uri());
   mesh->write_mesh(URI("file:diffusion1d.plt"), fields);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+BOOST_AUTO_TEST_CASE( test_advection_2d )
+{
+  // Create simulation model
+  Handle<sdm::Model> model = Core::instance().root().create_component<sdm::Model>("adv2d");
+
+  // ---------------------------------------------------------------------------------------
+  //      CREATE MESH
+  // ---------------------------------------------------------------------------------------
+
+  Uint dim = 2;
+  Handle<Mesh>          mesh           = model->domain()->create_component<Mesh>("mesh");
+  Handle<MeshGenerator> mesh_generator = model->tools()->create_component("mesh_generator","cf3.mesh.SimpleMeshGenerator")->handle<MeshGenerator>();
+  mesh_generator->options().set("mesh",mesh->uri());
+  mesh_generator->options().set("nb_cells",std::vector<Uint>(dim,20));
+  mesh_generator->options().set("lengths",std::vector<Real>(dim,10));
+  mesh_generator->execute();
+  allocate_component<LoadBalance>("repartitioner")->transform(mesh);
+
+  // ---------------------------------------------------------------------------------------
+  //      CREATE PHYSICS
+  // ---------------------------------------------------------------------------------------
+
+  Handle<solver::PDE> pde = model->add_pde( /*name*/  "advectiondiffusion",
+                                            /*type*/  "cf3.sdm.equations.advectiondiffusion.AdvectionDiffusion2D",
+                                            /*order*/ 1 );
+  std::vector<Real> a(dim);
+  a[XX] = 0.;
+  a[YY] = 1.;
+  pde->options().set("a",a);
+  pde->options().set("mu",0.);
+
+  std::vector< Handle<Component> > bc_regions;
+//  bc_regions.push_back( mesh->access_component("topology/xneg") );
+//  bc_regions.push_back( mesh->access_component("topology/xpos") );
+  // Handle<solver::BC> bc_mirror = pde->add_bc("mirror","cf3.sdm.equations.advectiondiffusion.BCMirror1D",bc_regions);
+
+  // ---------------------------------------------------------------------------------------
+  //      INITIALISE SOLUTION
+  // ---------------------------------------------------------------------------------------
+
+  for (Uint n=0; n<pde->fields()->size(); ++n)
+  {
+    Real& x = pde->solution()->coordinates()[n][XX];
+    Real& y = pde->solution()->coordinates()[n][YY];
+    Real& q = pde->solution()->array()[n][0];
+    if (y < 2.5)
+      q = 5.;
+    else
+      q = -5.;
+  }
+
+  // ---------------------------------------------------------------------------------------
+  //      SOLVE WITH RUNGEKUTTA
+  // ---------------------------------------------------------------------------------------
+
+  Handle<solver::PDESolver> solver = model->add_solver( pde,
+                                                        "cf3.sdm.solver.erkls.TwoSstar",
+                                                        "cf3.solver.ImposeCFL" );
+  solver->options().set("order",1);
+  solver->time_step_computer()->options().set("cfl",1.);
+
+  // ---------------------------------------------------------------------------------------
+  //      TIME STEPPING
+  // ---------------------------------------------------------------------------------------
+
+  model->time_stepping()->options().set("end_time",5.);
+  model->time_stepping()->options().set("time_step",1.);
+
+  while ( model->time_stepping()->not_finished() )
+  {
+    model->time_stepping()->do_step();
+    mesh->write_mesh(URI("file:advection2d_"+model->time_stepping()->options()["step"].value_str()+".plt"), std::vector<URI>(1,pde->solution()->uri()));
+  }
+
+  // ---------------------------------------------------------------------------------------
+  //      WRITE SOLUTION
+  // ---------------------------------------------------------------------------------------
+  std::vector<URI> fields;
+  fields.push_back(pde->solution()->uri());
+  mesh->write_mesh(URI("file:advection2d.plt"), fields);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+BOOST_AUTO_TEST_CASE( test_diffusion_2d )
+{
+  // Create simulation model
+  Handle<sdm::Model> model = Core::instance().root().create_component<sdm::Model>("diff2d");
+
+  // ---------------------------------------------------------------------------------------
+  //      CREATE MESH
+  // ---------------------------------------------------------------------------------------
+
+  Uint dim = 2;
+  Handle<Mesh>          mesh           = model->domain()->create_component<Mesh>("mesh");
+  Handle<MeshGenerator> mesh_generator = model->tools()->create_component("mesh_generator","cf3.mesh.SimpleMeshGenerator")->handle<MeshGenerator>();
+  mesh_generator->options().set("mesh",mesh->uri());
+  mesh_generator->options().set("nb_cells",std::vector<Uint>(dim,20));
+  mesh_generator->options().set("lengths",std::vector<Real>(dim,10));
+  mesh_generator->execute();
+  allocate_component<LoadBalance>("repartitioner")->transform(mesh);
+
+  // ---------------------------------------------------------------------------------------
+  //      CREATE PHYSICS
+  // ---------------------------------------------------------------------------------------
+
+  Handle<solver::PDE> pde = model->add_pde( /*name*/  "advectiondiffusion",
+                                            /*type*/  "cf3.sdm.equations.advectiondiffusion.AdvectionDiffusion2D",
+                                            /*order*/ 2 );
+  std::vector<Real> a(dim);
+  a[XX] = 0.;
+  a[YY] = 0.;
+  pde->options().set("a",a);
+  pde->options().set("mu",1.);
+
+  std::vector< Handle<Component> > bc_regions;
+//  bc_regions.push_back( mesh->access_component("topology/xneg") );
+//  bc_regions.push_back( mesh->access_component("topology/xpos") );
+  // Handle<solver::BC> bc_mirror = pde->add_bc("mirror","cf3.sdm.equations.advectiondiffusion.BCMirror1D",bc_regions);
+
+  // ---------------------------------------------------------------------------------------
+  //      INITIALISE SOLUTION
+  // ---------------------------------------------------------------------------------------
+
+  for (Uint n=0; n<pde->fields()->size(); ++n)
+  {
+    Real& x = pde->solution()->coordinates()[n][XX];
+    Real& y = pde->solution()->coordinates()[n][YY];
+    Real& q = pde->solution()->array()[n][0];
+    if (x+y < 10.0)
+      q = 5.;
+    else
+      q = -5.;
+  }
+
+  // ---------------------------------------------------------------------------------------
+  //      SOLVE WITH RUNGEKUTTA
+  // ---------------------------------------------------------------------------------------
+
+  Handle<solver::PDESolver> solver = model->add_solver( pde,
+                                                        "cf3.sdm.solver.erkls.TwoSstar",
+                                                        "cf3.solver.ImposeCFL" );
+  solver->options().set("order",2);
+  solver->time_step_computer()->options().set("cfl",0.5);
+
+  // ---------------------------------------------------------------------------------------
+  //      TIME STEPPING
+  // ---------------------------------------------------------------------------------------
+
+  model->time_stepping()->options().set("end_time",5.);
+  model->time_stepping()->options().set("time_step",1.);
+
+  while ( model->time_stepping()->not_finished() )
+  {
+    model->time_stepping()->do_step();
+    mesh->write_mesh(URI("file:diffusion2d_"+model->time_stepping()->options()["step"].value_str()+".plt"), std::vector<URI>(1,pde->solution()->uri()));
+  }
+
+  // ---------------------------------------------------------------------------------------
+  //      WRITE SOLUTION
+  // ---------------------------------------------------------------------------------------
+  std::vector<URI> fields;
+  fields.push_back(pde->solution()->uri());
+  mesh->write_mesh(URI("file:diffusion2d.plt"), fields);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
