@@ -45,6 +45,7 @@ public: // types
 
   typedef typename physics::MatrixTypes<NDIM,NEQS>::ColVector_NDIM ColVector_NDIM;
   typedef typename physics::MatrixTypes<NDIM,NEQS>::RowVector_NEQS RowVector_NEQS;
+  typedef typename physics::MatrixTypes<NDIM,NEQS>::Matrix_NDIMxNDIM Matrix_NDIMxNDIM;
 
 public: // functions
   /// Contructor
