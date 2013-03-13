@@ -13,6 +13,8 @@ list( APPEND coolfluid_sdm_equations_navierstokes_files
   Terms1D.cpp
   Terms2D.hpp
   Terms2D.cpp
+  InitBlasius.hpp
+  InitBlasius.cpp
   HLLE.cpp
   HLLE.hpp
   Roe.cpp

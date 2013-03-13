@@ -173,7 +173,6 @@ void Terms1D::config_riemann_solver()
   std::string builder_name = m_riemann_solver_type;
   if (! boost::algorithm::starts_with(builder_name,"cf3." ) )
     builder_name = "cf3.sdm.equations.navierstokes."+builder_name+"1D";
-  CFinfo << "buildername = " << builder_name << CFendl;
   if (m_riemann_solver) remove_component(*m_riemann_solver);
   m_riemann_solver = create_component("riemann_solver",builder_name)->handle< solver::RiemannSolver<Terms1D> >();
 }

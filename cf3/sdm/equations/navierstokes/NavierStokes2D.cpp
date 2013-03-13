@@ -65,7 +65,7 @@ NavierStokes2D::~NavierStokes2D()
 
 std::string NavierStokes2D::solution_variables() const
 {
-  return "rho[scalar], U[vector], rhoE[scalar]";
+  return "rho[scalar], rhoU[vector], rhoE[scalar]";
 }
 
 ////////////////////////////////////////////////////////////////////////////////
