@@ -11,6 +11,8 @@ list( APPEND coolfluid_sdm_equations_euler_files
   BCMirror.cpp
   BCPressureOutlet.hpp
   BCPressureOutlet.cpp
+  BCPressureVelocityInlet.hpp
+  BCPressureVelocityInlet.cpp
   BCSubsonicInlet.hpp
   BCSubsonicInlet.cpp
   Euler1D.hpp

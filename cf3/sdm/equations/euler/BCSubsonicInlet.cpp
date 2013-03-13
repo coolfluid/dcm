@@ -40,11 +40,14 @@ BCSubsonicInlet2D::BCSubsonicInlet2D(const std::string& name) :
 
 
   options().add("Tt",m_function_Tt.function()).description("Total Temperature")
-      .attach_trigger( boost::bind( &BCSubsonicInlet2D::config_Tt, this) );
+      .attach_trigger( boost::bind( &BCSubsonicInlet2D::config_Tt, this) )
+      .mark_basic();
   options().add("Pt",m_function_Pt.function()).description("Total Pressure")
-      .attach_trigger( boost::bind( &BCSubsonicInlet2D::config_Pt, this) );
+      .attach_trigger( boost::bind( &BCSubsonicInlet2D::config_Pt, this) )
+      .mark_basic();
   options().add("alpha",m_function_alpha.function()).description("flow angle in rad")
-      .attach_trigger( boost::bind( &BCSubsonicInlet2D::config_alpha, this) );
+      .attach_trigger( boost::bind( &BCSubsonicInlet2D::config_alpha, this) )
+      .mark_basic();
 }
 
 /////////////////////////////////////////////////////////////////////////////

@@ -59,7 +59,7 @@ Euler2D::~Euler2D()
 
 std::string Euler2D::solution_variables() const
 {
-  return "rho[scalar], U[vector], rhoE[scalar]";
+  return "rho[scalar], rhoU[vector], rhoE[scalar]";
 }
 
 ////////////////////////////////////////////////////////////////////////////////

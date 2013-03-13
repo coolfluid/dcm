@@ -52,7 +52,6 @@ void BCPressureOutlet2D::compute_boundary_solution( const RowVector_NEQS& inner_
                                                     RowVector_NEQS& boundary_solution )
 {
   m_function_p.evaluate(coords,m_p);
-
   m_rho_inner  = inner_solution[Rho];
   m_u_inner    = inner_solution[RhoUx]/m_rho_inner;
   m_v_inner    = inner_solution[RhoUy]/m_rho_inner;
@@ -61,7 +60,7 @@ void BCPressureOutlet2D::compute_boundary_solution( const RowVector_NEQS& inner_
   boundary_solution[Rho  ]=inner_solution[Rho];
   boundary_solution[RhoUx]=inner_solution[RhoUx];
   boundary_solution[RhoUy]=inner_solution[RhoUy];
-  boundary_solution[RhoE ]=m_p/m_gamma_minus_1 + 0.5 * m_rho_inner * m_uuvv_inner;
+  boundary_solution[RhoE ]=m_p/(m_gamma-1.) + 0.5 * m_rho_inner * m_uuvv_inner;
 }
 
 /////////////////////////////////////////////////////////////////////////////

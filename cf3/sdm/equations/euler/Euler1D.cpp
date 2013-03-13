@@ -60,7 +60,7 @@ Euler1D::~Euler1D()
 
 std::string Euler1D::solution_variables() const
 {
-  return "rho[scalar], U[vector], rhoE[scalar]";
+  return "rho[scalar], rhoU[vector], rhoE[scalar]";
 }
 
 ////////////////////////////////////////////////////////////////////////////////
