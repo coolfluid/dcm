@@ -129,7 +129,7 @@ CombinedTermComputer<TERM>::CombinedTermComputer ( const std::string& name ) :
 
   options().add("alpha",-1.)
       .description("Damping coefficient in BR2 scheme for face-gradient computation\n"
-                   "If negative, alpha = 1/order is used");
+                   "If negative, alpha = 1/(P+1) is used");
 }
 
 ////////////////////////////////////////////////////////////////////////////////

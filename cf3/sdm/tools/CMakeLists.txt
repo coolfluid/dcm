@@ -1,6 +1,4 @@
 list( APPEND coolfluid_sdm_tools_files
-  ComputeLNorm.hpp
-  ComputeLNorm.cpp
   LibTools.hpp
   LibTools.cpp
 )
