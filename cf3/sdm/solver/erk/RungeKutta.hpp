@@ -110,7 +110,7 @@ private: // data
   
   // Registers necessary for general runge kutta algorithm
   Handle<mesh::Field> m_backup;              ///< U0
-  std::vector< Handle<mesh::Field> > m_rhs;  ///< R(i)
+  std::vector< Handle<mesh::Field> > m_rhs_stages;  ///< R(i)
 };
 
 ////////////////////////////////////////////////////////////////////////////////

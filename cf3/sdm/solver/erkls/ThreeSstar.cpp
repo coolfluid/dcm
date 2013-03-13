@@ -71,11 +71,6 @@ void ThreeSstarImplementation::create_fields()
   else
     m_S2 = m_pde->fields()->create_field("S2",m_pde->nb_eqs()).handle<Field>();
 
-  if ( found = m_pde->fields()->get_child("rhs") )
-    m_rhs = found->handle<Field>();
-  else
-    m_rhs = m_pde->fields()->create_field("rhs",m_pde->nb_eqs()).handle<Field>();
-
   if ( found = m_pde->fields()->get_child("ws") )
     m_ws = found->handle<Field>();
   else
@@ -100,14 +95,14 @@ void ThreeSstarImplementation::step()
 
   m_time_step_computer->options().set("wave_speed",m_ws);
   m_time_step_computer->options().set("time_step",m_dt);
-  m_pde->rhs()->options().set("wave_speed",m_ws);
-  m_pde->rhs()->options().set("rhs",m_rhs);
+  m_pde->rhs_computer()->options().set("wave_speed",m_ws);
+  m_pde->rhs_computer()->options().set("rhs",m_pde->rhs());
 
 
   Field& S1 = *m_pde->solution();;
   Field& S2 = *m_S2;
   Field& S3 = *m_backup;
-  Field& R  = *m_rhs;
+  Field& R  = *m_pde->rhs();
   Field& H  = *m_dt;
 
   const Real T0 = time.current_time();
@@ -123,7 +118,7 @@ void ThreeSstarImplementation::step()
     // Set boundary condition
     m_pde->bc()->execute();
     // Compute right-hand-side
-    m_pde->rhs()->execute();
+    m_pde->rhs_computer()->execute();
 
     // Compute time step and backup solution
     if (stage == 0)

@@ -50,15 +50,15 @@ void RungeKuttaImplementation::create_fields()
     m_backup = m_pde->fields()->create_field("backup",m_pde->nb_eqs()).handle<Field>();
 
   Uint nb_stages = m_butcher->nb_stages();
-  if (m_rhs.size() != nb_stages)
-    m_rhs.resize(nb_stages);
+  if (m_rhs_stages.size() != nb_stages)
+    m_rhs_stages.resize(nb_stages);
   
   for (Uint i=0; i<nb_stages; ++i)
   {
     if ( found = m_pde->fields()->get_child("rhs_"+to_str(i)) )
-      m_rhs[i] = found->handle<Field>();
+      m_rhs_stages[i] = found->handle<Field>();
     else
-      m_rhs[i] = m_pde->fields()->create_field("rhs_"+to_str(i),m_pde->nb_eqs()).handle<Field>();
+      m_rhs_stages[i] = m_pde->fields()->create_field("rhs_"+to_str(i),m_pde->nb_eqs()).handle<Field>();
   }
 
   if ( found = m_pde->fields()->get_child("ws") )
@@ -92,6 +92,7 @@ void RungeKuttaImplementation::step()
   m_time_step_computer->options().set("time_step",m_dt);
 
   Field& U  = *m_pde->solution();
+  Field& R  = *m_pde->rhs();
   Field& H  = *m_dt;
   Field& U0 = *m_backup;
   const Real T0 = time.current_time();
@@ -109,7 +110,7 @@ void RungeKuttaImplementation::step()
     // Set boundary condition
     m_pde->bc()->execute();
     // Compute right-hand-side
-    m_pde->rhs()->compute_rhs(*m_rhs[stage],*m_ws);
+    m_pde->rhs_computer()->compute_rhs(*m_rhs_stages[stage],*m_ws);
 
     // Compute time step and backup solution
     if (stage == 0)
@@ -132,7 +133,7 @@ void RungeKuttaImplementation::step()
         Real a_j = butcher.a(next_stage,j);
         if (a_j != 0)
         {
-          const Field& R_j = (*m_rhs[j]);  // R from previous stages
+          const Field& R_j = (*m_rhs_stages[j]);  // R from previous stages
           for (Uint pt=0; pt<U.size(); ++pt)
           {
             for (Uint v=0; v<U.row_size(); ++v)
@@ -152,12 +153,13 @@ void RungeKuttaImplementation::step()
       {
         if (butcher.b(j)!=0)
         {
-          const Field& R_j = (*m_rhs[j]);  // R from previous stages
+          const Field& R_j = (*m_rhs_stages[j]);  // R from previous stages
           for (Uint pt=0; pt<U.size(); ++pt)
           {
             for (Uint v=0; v<U.row_size(); ++v)
             {
-              U[pt][v] += H[pt][0] * butcher.b(j) * R_j[pt][v];;
+              R[pt][v] += butcher.b(j) * R_j[pt][v];
+              U[pt][v] += H[pt][0] * R[pt][v];
             }
           }
         }

@@ -66,11 +66,6 @@ void TwoSstarImplementation::create_fields()
   else
     m_backup = m_pde->fields()->create_field("backup",m_pde->nb_eqs()).handle<Field>();
 
-  if ( found = m_pde->fields()->get_child("rhs") )
-    m_rhs = found->handle<Field>();
-  else
-    m_rhs = m_pde->fields()->create_field("rhs",m_pde->nb_eqs()).handle<Field>();
-
   if ( found = m_pde->fields()->get_child("ws") )
     m_ws = found->handle<Field>();
   else
@@ -95,11 +90,11 @@ void TwoSstarImplementation::step()
 
   m_time_step_computer->options().set("wave_speed",m_ws);
   m_time_step_computer->options().set("time_step",m_dt);
-  m_pde->rhs()->options().set("wave_speed",m_ws);
-  m_pde->rhs()->options().set("rhs",m_rhs);
+  m_pde->rhs_computer()->options().set("wave_speed",m_ws);
+  m_pde->rhs_computer()->options().set("rhs",m_pde->rhs());
 
   Field& U  = *m_pde->solution();
-  Field& R  = *m_rhs;
+  Field& R  = *m_pde->rhs();
   Field& H  = *m_dt;
   Field& U0 = *m_backup;
   const Real T0 = time.current_time();
@@ -116,7 +111,7 @@ void TwoSstarImplementation::step()
     // Set boundary condition
     m_pde->bc()->execute();
     // Compute right-hand-side
-    m_pde->rhs()->execute();
+    m_pde->rhs_computer()->execute();
 
     // Compute time step and backup solution
     if (stage == 0)
@@ -155,7 +150,8 @@ TwoSstar::TwoSstar ( const std::string& name ) :
   options().add("order", 1u)
       .description("Order of the Runge-Kutta integration")
       .pretty_name("RK order")
-      .attach_trigger( boost::bind( &TwoSstar::config_order , this ) );  
+      .attach_trigger( boost::bind( &TwoSstar::config_order , this ) )
+      .mark_basic();
   
   m_coeffs = create_component<TwoSstarCoeffs>("coeffs");
   config_order();
