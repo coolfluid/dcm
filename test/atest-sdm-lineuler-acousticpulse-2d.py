@@ -7,7 +7,7 @@ model   = cf.root.create_component('accousticpulse_2d','cf3.sdm.Model');
 mesh = model.domain.load_mesh(file = cf.URI('../../../resources/circle-quad-p1-32.msh'), name = 'circle');
 
 ### Add the Partial Differential Equations to solve
-lineuler = model.add_pde(name='lineuler',type='cf3.sdm.equations.lineuler.LinEulerUniform2D',order=4)
+lineuler = model.add_pde(name='lineuler',type='cf3.sdm.equations.lineuler.LinEulerUniform2D',order=2)
 lineuler.gamma = 1.4
 lineuler.U0 = [0,0]
 lineuler.rho0 = 1
@@ -55,7 +55,7 @@ for i in range(len(difference)) :
     difference[i][2] = exact_solution[i][2] - solution[i][2]/lineuler.rho0
     difference[i][3] = exact_solution[i][3] - solution[i][3]
 
-compute_norm = model.tools.create_component('compute_norm','cf3.sdm.tools.ComputeLNorm')
+compute_norm = model.tools.create_component('compute_norm','cf3.solver.ComputeLNorm')
 compute_norm.field = difference
 compute_norm.order = 2
 compute_norm.execute()

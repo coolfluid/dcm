@@ -149,7 +149,7 @@ BOOST_AUTO_TEST_CASE( compute_2d )
   mesh_generator->execute();
   allocate_component<LoadBalance>("repartitioner")->transform(mesh);
 
-  Handle<Dictionary> solution_space = model->create_sd_space("solution_space",2u, std::vector< Handle<Component> >(1,mesh->handle()));
+  Handle<Dictionary> solution_space = model->create_sd_space("solution_space",3u, std::vector< Handle<Component> >(1,mesh->handle()));
 
   // Create and setup physics
   typedef sdm::test::Term<dim>  TERM;
@@ -171,9 +171,12 @@ BOOST_AUTO_TEST_CASE( compute_2d )
   // BOOST_CHECK_NO_THROW (compute_rhs->compute_rhs(rhs,wave_speed));
   compute_term->compute_term(term_field,wave_speed);
 
-  mesh->write_mesh(URI("file:term_field_"+to_str(dim)+"d.msh"), std::vector<URI>(1,term_field.uri()));
-  // mesh->write_mesh(URI("file:rhs_"+to_str(dim)+"d.msh"), std::vector<URI>(1,rhs.uri()));
-
+  std::vector<URI> fields;
+  fields.push_back(term_field.uri());
+  fields.push_back(wave_speed.uri());
+  mesh->write_mesh(URI("file:term_field_"+to_str(dim)+"d.msh"), fields);
+  mesh->write_mesh(URI("file:rhs_"+to_str(dim)+"d.msh"), std::vector<URI>(1,rhs.uri()));
+  
   std::cout << std::boolalpha;
   std::cout << "has_convection: " << TERM::ENABLE_CONVECTION << std::endl;
   std::cout << "has_diffusion:  " << TERM::ENABLE_DIFFUSION  << std::endl;
@@ -181,6 +184,7 @@ BOOST_AUTO_TEST_CASE( compute_2d )
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+
 
 BOOST_AUTO_TEST_CASE( compute_3d )
 {
