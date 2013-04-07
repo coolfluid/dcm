@@ -67,12 +67,15 @@ public: // signals
   void signal_add_solver( common::SignalArgs& args);
   void signature_add_solver( common::SignalArgs& args);
 
+  void signal_create_space( common::SignalArgs& args);
+  void signature_create_space( common::SignalArgs& args);
+
 //  void signal_add_probe(common::SignalArgs& args);
 //  void signature_add_probe(common::SignalArgs& args);
 
 public: // functions
 
-  Handle<mesh::Dictionary> create_sd_space(const std::string& name, const Uint& order, const std::vector<Handle<common::Component> > &regions);
+  Handle<mesh::Dictionary> create_space(const std::string& name, const Uint& order, const std::vector<Handle<common::Component> > &regions);
 
 private: // functions
 

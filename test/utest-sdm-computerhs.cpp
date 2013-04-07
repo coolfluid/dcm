@@ -100,7 +100,7 @@ BOOST_AUTO_TEST_CASE( compute_1d )
   mesh_generator->execute();
   allocate_component<LoadBalance>("repartitioner")->transform(mesh);
 
-  Handle<Dictionary> solution_space = model->create_sd_space("solution_space",4u, std::vector< Handle<Component> >(1,mesh->handle()));
+  Handle<Dictionary> solution_space = model->create_space("solution_space",4u, std::vector< Handle<Component> >(1,mesh->handle()));
 
   // Create and setup physics
   typedef sdm::test::Term<dim>  TERM;
@@ -149,7 +149,7 @@ BOOST_AUTO_TEST_CASE( compute_2d )
   mesh_generator->execute();
   allocate_component<LoadBalance>("repartitioner")->transform(mesh);
 
-  Handle<Dictionary> solution_space = model->create_sd_space("solution_space",3u, std::vector< Handle<Component> >(1,mesh->handle()));
+  Handle<Dictionary> solution_space = model->create_space("solution_space",3u, std::vector< Handle<Component> >(1,mesh->handle()));
 
   // Create and setup physics
   typedef sdm::test::Term<dim>  TERM;
@@ -202,7 +202,7 @@ BOOST_AUTO_TEST_CASE( compute_3d )
   mesh_generator->execute();
   allocate_component<LoadBalance>("repartitioner")->transform(mesh);
 
-  Handle<Dictionary> solution_space = model->create_sd_space("solution_space",4u, std::vector< Handle<Component> >(1,mesh->handle()));
+  Handle<Dictionary> solution_space = model->create_space("solution_space",4u, std::vector< Handle<Component> >(1,mesh->handle()));
 
   // Create and setup physics
   typedef sdm::test::Term<dim>  TERM;

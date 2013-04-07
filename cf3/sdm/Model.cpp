@@ -87,6 +87,11 @@ Model::Model ( const std::string& name  ) :
       .connect   ( boost::bind ( &Model::signal_add_pde,    this, _1 ) )
       .signature ( boost::bind ( &Model::signature_add_pde, this, _1 ) );
 
+  regist_signal ( "create_space" )
+      .description( "Create SD space" )
+      .pretty_name("Create SD space" )
+      .connect   ( boost::bind ( &Model::signal_create_space,    this, _1 ) )
+      .signature ( boost::bind ( &Model::signature_create_space, this, _1 ) );
 
   regist_signal ( "add_solver" )
       .description( "Add solver to solve given PDEs" )
@@ -121,7 +126,7 @@ Model::~Model()
 
 ////////////////////////////////////////////////////////////////////////////////
 
-Handle<mesh::Dictionary> Model::create_sd_space(const std::string& name, const Uint& order, const std::vector<Handle<Component> >& regions)
+Handle<mesh::Dictionary> Model::create_space(const std::string& name, const Uint& order, const std::vector<Handle<Component> >& regions)
 {
   if (find_components<Mesh>(*m_domain).size() == 0)
     throw SetupError(FromHere(), "Could not create solution_space because no meshes were found in "+m_domain->uri().string());
@@ -203,6 +208,32 @@ void Model::signature_add_pde( common::SignalArgs& args )
 
 ////////////////////////////////////////////////////////////////////////////////
 
+void Model::signal_create_space( common::SignalArgs& args)
+{
+  common::XML::SignalOptions opts(args);
+
+  Handle<Dictionary> space = create_space(
+      opts.value<std::string>("name"),
+      opts.value<Uint>("order"),
+      opts.value< std::vector< Handle<Component> > >("regions") );
+
+  common::XML::SignalFrame reply = args.create_reply(uri());
+  SignalOptions reply_options(reply);
+  reply_options.add("created_component",space->uri());
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+void Model::signature_create_space( common::SignalArgs& args )
+{
+  common::XML::SignalOptions opts(args);
+  opts.add("name",std::string("pde"));
+  opts.add("order",2u);
+  opts.add("regions",std::vector< Handle<Component> >(1,m_domain->handle()));
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 void Model::signal_add_solver( common::SignalArgs& args)
 {
   common::XML::SignalOptions opts(args);
@@ -271,7 +302,7 @@ Handle<solver::PDE> Model::add_pde(const std::string& name, const std::string& t
 
 Handle<solver::PDE> Model::add_pde(const std::string& name, const std::string& type, const Uint order, const std::vector<Handle<common::Component> > &regions)
 {
-  Handle<Dictionary> solution_space = create_sd_space(name,order,regions);
+  Handle<Dictionary> solution_space = create_space(name,order,regions);
 
   Handle<solver::PDE> pde = create_component(name,type)->handle<solver::PDE>();
   pde->mark_basic();
