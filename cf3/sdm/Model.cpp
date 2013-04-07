@@ -45,6 +45,8 @@
 
 #include "cf3/sdm/Model.hpp"
 
+#include "cf3/sdm/tools/CreateTermComputer.hpp"
+
 using namespace cf3::common;
 using namespace cf3::mesh;
 using namespace cf3::mesh::actions;
@@ -94,7 +96,7 @@ Model::Model ( const std::string& name  ) :
 
   m_tools->create_component<mesh::actions::CreateField>("field_creator")->mark_basic();
   m_tools->create_component<mesh::actions::InitFieldFunction>("init_field")->mark_basic();
-
+  m_tools->create_component<tools::CreateTermComputer>("create_term_computer")->mark_basic();
 //  regist_signal("add_probe")
 //      .description("Add a probe in one coordinate to inspect and log variables")
 //      .pretty_name("Add Probe")

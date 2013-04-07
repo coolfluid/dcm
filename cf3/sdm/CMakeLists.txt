@@ -17,4 +17,5 @@ coolfluid3_add_library( TARGET  coolfluid_sdm
                                 coolfluid_solver_actions
                                 coolfluid_physics
                                 coolfluid_mesh_lagrangep2
-                                coolfluid_sdm_core )
+                                coolfluid_sdm_core
+                                coolfluid_sdm_tools )

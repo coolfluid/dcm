@@ -26,6 +26,9 @@ namespace core {
 
 ////////////////////////////////////////////////////////////////////////////////
 
+/// @brief Numerical computation of a term in a PDE
+/// @note - It is assumed that all cells are of the same shape function
+///       - flux points and solution points are aligned
 template < typename TERM >
 class sdm_core_API CombinedTermComputer : public solver::TermComputer {
 
@@ -450,32 +453,42 @@ void CombinedTermComputer<TERM>::compute_term(const Uint elem_idx, std::vector<R
                                  /*in*/  m_flx_pt_gradvars_grad[flx_pt],
                                  /*out*/ m_phys_data );
 
-      // Compute fluxes projected on unit_normal
-      m_term->compute_convective_flux( /*in*/  m_phys_data,
-                                       /*in*/  m_metrics->flx_pt_unit_normal(flx_pt),
-                                       /*out*/ m_convective_flux,
-                                       /*out*/ m_convective_wave_speed );
+      m_flx_pt_flux[flx_pt].setZero();
+      m_convective_wave_speed = 0.;
+      m_diffusive_wave_speed = 0.;
 
-      m_term->compute_diffusive_flux( /*in*/  m_phys_data,
-                                      /*in*/  m_metrics->flx_pt_unit_normal(flx_pt),
-                                      /*out*/ m_diffusive_flux,
-                                      /*out*/ m_diffusive_wave_speed );
+      if ( TERM::ENABLE_CONVECTION )
+      {
+        // Compute fluxes projected on unit_normal
+        m_term->compute_convective_flux( /*in*/  m_phys_data,
+                                         /*in*/  m_metrics->flx_pt_unit_normal(flx_pt),
+                                         /*out*/ m_convective_flux,
+                                         /*out*/ m_convective_wave_speed );
+        m_flx_pt_flux[flx_pt] += m_convective_flux;
 
-      m_flx_pt_flux[flx_pt]  = m_convective_flux;
-      m_flx_pt_flux[flx_pt] -= m_diffusive_flux;
+        // Convective wavespeed --> a/dx
+        m_convective_wave_speed *= m_metrics->flx_pt_Jvec_abs(flx_pt);
+        m_convective_wave_speed /= m_metrics->flx_pt_Jdet(flx_pt);
+      }
+
+      if ( TERM::ENABLE_DIFFUSION )
+      {
+        // Compute fluxes projected on unit_normal
+        m_term->compute_diffusive_flux( /*in*/  m_phys_data,
+                                        /*in*/  m_metrics->flx_pt_unit_normal(flx_pt),
+                                        /*out*/ m_diffusive_flux,
+                                        /*out*/ m_diffusive_wave_speed );
+        m_flx_pt_flux[flx_pt] -= m_diffusive_flux;
+
+        // Diffusive wavespeed  --> mu/dx2
+        m_diffusive_wave_speed *= m_metrics->flx_pt_Jvec_abs(flx_pt)*m_metrics->flx_pt_Jvec_abs(flx_pt);
+        m_diffusive_wave_speed /= m_metrics->flx_pt_Jdet(flx_pt)*m_metrics->flx_pt_Jdet(flx_pt);
+      }
 
       // Rescale flux because of transformation to mapped coordinate system
       m_flx_pt_flux[flx_pt]       *= m_metrics->flx_pt_Jvec_abs(flx_pt);
 
-      // Convective wavespeed --> a/dx
-      m_convective_wave_speed *= m_metrics->flx_pt_Jvec_abs(flx_pt);
-      m_convective_wave_speed /= m_metrics->flx_pt_Jdet(flx_pt);
-
-      // Diffusive wavespeed  --> mu/dx2
-      m_diffusive_wave_speed *= m_metrics->flx_pt_Jvec_abs(flx_pt)*m_metrics->flx_pt_Jvec_abs(flx_pt);
-      m_diffusive_wave_speed /= m_metrics->flx_pt_Jdet(flx_pt)*m_metrics->flx_pt_Jdet(flx_pt);
-
-      // Take max of both
+      // Take max of both wave speeds
       m_flx_pt_wave_speed[flx_pt] = std::max(m_convective_wave_speed,m_diffusive_wave_speed);
     }
 
@@ -494,6 +507,7 @@ void CombinedTermComputer<TERM>::compute_term(const Uint elem_idx, std::vector<R
     {
       boost_foreach (Uint flx_pt, m_face_pts[face_nb])
       {
+        m_flx_pt_flux[flx_pt].setZero();
         if ( TERM::ENABLE_CONVECTION )
         {
           // compute physical data in flux points on this side
@@ -520,7 +534,7 @@ void CombinedTermComputer<TERM>::compute_term(const Uint elem_idx, std::vector<R
                                         /*out*/ m_convective_flux,
                                         /*out*/ m_convective_wave_speed );
           m_convective_flux *= m_sf->flx_pt_sign(flx_pt);
-          m_flx_pt_flux[flx_pt] = m_convective_flux;
+          m_flx_pt_flux[flx_pt] += m_convective_flux;
         }
 
         if ( TERM::ENABLE_DIFFUSION )
@@ -540,7 +554,6 @@ void CombinedTermComputer<TERM>::compute_term(const Uint elem_idx, std::vector<R
 
         // Rescale flux because of transformation to mapped coordinate system
         m_flx_pt_flux[flx_pt] *= m_metrics->flx_pt_Jvec_abs(flx_pt);
-
         // Convective wavespeed --> a/dx
         m_convective_wave_speed *= m_metrics->flx_pt_Jvec_abs(flx_pt);
         m_convective_wave_speed /= m_metrics->flx_pt_Jdet(flx_pt);
@@ -566,7 +579,6 @@ void CombinedTermComputer<TERM>::compute_term(const Uint elem_idx, std::vector<R
       {
         boost_foreach( Uint flx_pt, m_metrics->derivation_from_flx_pts_to_sol_pt(sol_pt,d).used_points() )
         {
-
           const Real C = m_metrics->derivation_from_flx_pts_to_sol_pt(sol_pt,d).coeff(flx_pt);
           for (Uint eq=0; eq<NEQS; ++eq)
             m_sol_pt_flux_divergence[sol_pt][eq] += m_flx_pt_flux[flx_pt][eq] * C;

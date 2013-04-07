@@ -15,6 +15,11 @@ coolfluid_add_test( UTEST      utest-sdm-computerhs
                     LIBS       coolfluid_sdm coolfluid_mesh_gmsh
                     MPI        1 )
 
+coolfluid_add_test( UTEST      utest-sdm-tools-computefieldgradientBR2
+                    CPP        utest-sdm-tools-computefieldgradientBR2.cpp
+                    LIBS       coolfluid_sdm coolfluid_mesh_gmsh
+                    MPI        1 )
+
 coolfluid_add_test( UTEST      utest-sdm-advectiondiffusion
                     CPP        utest-sdm-advectiondiffusion.cpp
                     LIBS       coolfluid_sdm coolfluid_sdm_equations_advectiondiffusion coolfluid_sdm_solver_erkls

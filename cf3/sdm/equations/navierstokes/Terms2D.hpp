@@ -36,7 +36,7 @@ public:
 public: // types
 
   enum { ENABLE_CONVECTION = true };
-  enum { ENABLE_DIFFUSION = true };
+  enum { ENABLE_DIFFUSION  = true };
 
   typedef physics::navierstokes::navierstokes2d::Data DATA;
 
@@ -95,6 +95,48 @@ private: // configuration
   Real m_R;
   Real m_k;
   Real m_mu;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
+class sdm_equations_navierstokes_API Convection2D : public Terms2D
+{
+public: 
+
+  /// @brief Constructor
+  Convection2D( const std::string& name ) : Terms2D(name) {}
+  
+  /// @brief Destructor
+  virtual ~Convection2D() {}
+  
+  static std::string type_name() { return "NSConvection2D"; }
+  
+public: // types
+
+  enum { ENABLE_CONVECTION = true  };
+  enum { ENABLE_DIFFUSION  = false };
+
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
+class sdm_equations_navierstokes_API Diffusion2D : public Terms2D
+{
+public: 
+
+  /// @brief Constructor
+  Diffusion2D( const std::string& name ) : Terms2D(name) {}
+  
+  /// @brief Destructor
+  virtual ~Diffusion2D() {}
+  
+  static std::string type_name() { return "NSDiffusion2D"; }
+  
+public: // types
+
+  enum { ENABLE_CONVECTION = false };
+  enum { ENABLE_DIFFUSION  = true  };
+
 };
 
 ////////////////////////////////////////////////////////////////////////////////

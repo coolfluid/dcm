@@ -44,12 +44,14 @@ public: // functions
   virtual ~Metrics() {}
 
   /// Get the class name
-  static std::string type_name () { return "Metrics"; }
-
+  static std::string type_name () { return "Metrics"+common::to_str(NB_DIM)+"d"; }
 
   void setup_for_space(const Handle<mesh::Space const>& space);
 
   void compute_element(const Uint elem_idx);
+
+  const RealMatrix&
+    cell_coords() const;
 
   const mesh::ReconstructPoint&
     interpolation_from_cell_pts_to_flx_pt(const Uint flx_pt) const;
@@ -327,6 +329,15 @@ void Metrics<NB_DIM>::compute_element(const Uint elem_idx)
       m_sol_pt_Jdet[sol_pt] = m_cells->element_type().jacobian_determinant(m_sf->sol_pts().row(sol_pt), m_cell_coords);
     }
   }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+template <Uint NB_DIM>
+inline const RealMatrix&
+  Metrics<NB_DIM>::cell_coords() const
+{
+  return m_cell_coords;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -23,6 +23,12 @@ namespace navierstokes {
 common::ComponentBuilder<Terms2D,solver::Term,LibNavierStokes> Terms2D_builder;
 common::ComponentBuilder<core::CombinedTermComputer<Terms2D>,solver::TermComputer,LibNavierStokes> Terms2DComputer_builder;
 
+common::ComponentBuilder<Convection2D,solver::Term,LibNavierStokes> Convection2D_builder;
+common::ComponentBuilder<core::CombinedTermComputer<Convection2D>,solver::TermComputer,LibNavierStokes> Convection2DComputer_builder;
+
+common::ComponentBuilder<Diffusion2D,solver::Term,LibNavierStokes> Diffusion2D_builder;
+common::ComponentBuilder<core::CombinedTermComputer<Diffusion2D>,solver::TermComputer,LibNavierStokes> Diffusion2DComputer_builder;
+
 ////////////////////////////////////////////////////////////////////////////////
 
 Terms2D::Terms2D( const std::string& name ) :
