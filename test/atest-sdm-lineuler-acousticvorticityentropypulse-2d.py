@@ -7,7 +7,8 @@ model   = cf.root.create_component('accousticpulse_2d','cf3.sdm.Model');
 mesh = model.domain.load_mesh(file = cf.URI('../../../resources/square100-quad-p2-50x50.msh'), name = 'square')
 
 ### Add the Partial Differential Equations to solve
-lineuler = model.add_pde(name='lineuler',type='cf3.sdm.equations.lineuler.LinEulerUniform2D',order=4)
+lineuler = model.add_pde(name='lineuler',type='cf3.sdm.equations.lineuler.LinEulerUniform2D',
+    shape_function='cf3.sdm.core.LegendreGaussLobattoP3')
 lineuler.gamma = 1.
 lineuler.U0 = [0.5,0]
 lineuler.rho0 = 1

@@ -42,11 +42,11 @@ public: // functions
 
   Handle<solver::PDE> add_pde( const std::string& name,
                                const std::string& type,
-                               const Uint order );
+                               const std::string& shape_function );
 
   Handle<solver::PDE> add_pde( const std::string& name,
                                const std::string& type,
-                               const Uint order,
+                               const std::string& shape_function,
                                const std::vector<Handle<common::Component> > &regions);
 
   Handle<solver::PDESolver> add_solver( const Handle<solver::PDE>& pde,
@@ -75,7 +75,7 @@ public: // signals
 
 public: // functions
 
-  Handle<mesh::Dictionary> create_space(const std::string& name, const Uint& order, const std::vector<Handle<common::Component> > &regions);
+  Handle<mesh::Dictionary> create_space(const std::string& name, const std::string& shape_function, const std::vector<Handle<common::Component> > &regions);
 
 private: // functions
 

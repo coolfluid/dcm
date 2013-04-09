@@ -17,7 +17,8 @@ repartitioner.mesh = mesh
 repartitioner.execute()
 
 ### Add the Partial Differential Equations to solve
-lineuler = model.add_pde(name='lineuler',type='cf3.sdm.equations.lineuler.LinEulerUniform2D',order=3)
+lineuler = model.add_pde(name='lineuler',type='cf3.sdm.equations.lineuler.LinEulerUniform2D',
+    shape_function='cf3.sdm.core.LegendreGaussLobattoP2')
 lineuler.gamma = 1.
 lineuler.U0 = [0.5,0]
 lineuler.rho0 = 1

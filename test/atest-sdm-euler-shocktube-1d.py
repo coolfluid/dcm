@@ -18,9 +18,11 @@ load_balance.options().set("mesh",mesh)
 load_balance.execute()
 
 ### Add PDE
-euler = model.add_pde(name='euler',type='cf3.sdm.equations.euler.Euler1D',order=3)
+euler = model.add_pde(name='euler',type='cf3.sdm.equations.euler.Euler1D',shape_function='cf3.sdm.core.LegendreGaussLobattoP0')
 euler.gamma = 1.4
 euler.R = 287.05
+
+mesh.print_tree()
 
 ### Initial solution
 model.tools.init_field.init_field( field=euler.solution, functions = 

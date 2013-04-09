@@ -7,8 +7,8 @@ list( APPEND coolfluid_sdm_core_files
   CombinedTermComputer.cpp
   FaceConnectivity.hpp
   FaceConnectivity.cpp
-  LagrangeLocally1D.hpp
-  LagrangeLocally1D.cpp
+  LegendreGaussLobatto.hpp
+  LegendreGaussLobatto.cpp
   LibCore.hpp
   LibCore.cpp
   Metrics.hpp
@@ -16,6 +16,7 @@ list( APPEND coolfluid_sdm_core_files
   Reconstructions.hpp
   ShapeFunction.hpp
   ShapeFunction.cpp
+  Tensorial.hpp
 )
 
 coolfluid3_add_library( TARGET  coolfluid_sdm_core

@@ -23,14 +23,10 @@
 
 #include "cf3/mesh/LagrangeP1/Quad2D.hpp"
 
-#include "cf3/sdm/core/LagrangeLocally1D.hpp"
-
-
 using namespace boost::assign;
 using namespace cf3;
 using namespace cf3::common;
 using namespace cf3::mesh;
-using namespace cf3::sdm::core;
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -47,17 +43,17 @@ do {\
 
 //////////////////////////////////////////////////////////////////////////////
 
-struct sdm_MPITests_Fixture
+struct sdm_SD_Transformations_Fixture
 {
   /// common setup for each test case
-  sdm_MPITests_Fixture()
+  sdm_SD_Transformations_Fixture()
   {
     m_argc = boost::unit_test::framework::master_test_suite().argc;
     m_argv = boost::unit_test::framework::master_test_suite().argv;
   }
 
   /// common tear-down for each test case
-  ~sdm_MPITests_Fixture()
+  ~sdm_SD_Transformations_Fixture()
   {
   }
   /// possibly common functions used on the tests below
@@ -71,7 +67,7 @@ struct sdm_MPITests_Fixture
 
 ////////////////////////////////////////////////////////////////////////////////
 
-BOOST_FIXTURE_TEST_SUITE( sdm_solver_TestSuite, sdm_MPITests_Fixture )
+BOOST_FIXTURE_TEST_SUITE( sdm_solver_TestSuite, sdm_SD_Transformations_Fixture )
 
 //////////////////////////////////////////////////////////////////////////////
 

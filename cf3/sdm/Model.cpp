@@ -126,7 +126,7 @@ Model::~Model()
 
 ////////////////////////////////////////////////////////////////////////////////
 
-Handle<mesh::Dictionary> Model::create_space(const std::string& name, const Uint& order, const std::vector<Handle<Component> >& regions)
+Handle<mesh::Dictionary> Model::create_space(const std::string& name, const std::string& shape_function, const std::vector<Handle<Component> >& regions)
 {
   if (find_components<Mesh>(*m_domain).size() == 0)
     throw SetupError(FromHere(), "Could not create solution_space because no meshes were found in "+m_domain->uri().string());
@@ -144,7 +144,7 @@ Handle<mesh::Dictionary> Model::create_space(const std::string& name, const Uint
   Handle<Mesh> mesh = find_component_ptr<Mesh>(*m_domain);
   Handle<Dictionary> dict = mesh->create_component<DiscontinuousDictionary>(name);
 
-  std::string space_lib_name = "cf3.sdm.core.P"+to_str(order-1);
+  std::string space_lib_name = shape_function;
   CFinfo << "Creating Disontinuous space " << dict->uri() << " ("<<space_lib_name<<") for entities" << CFendl;
   boost_foreach(const Handle<Component>& comp, regions)
   {
@@ -187,12 +187,15 @@ void Model::signal_add_pde( common::SignalArgs& args)
   common::XML::SignalOptions opts(args);
   Handle<solver::PDE> pde = add_pde( opts.value<std::string>("name"),
                                      opts.value<std::string>("type"),
-                                     opts.value<Uint>("order"),
+                                     opts.value<std::string>("shape_function"),
                                      opts.value< std::vector< Handle<Component> > >("regions") );
 
   common::XML::SignalFrame reply = args.create_reply(uri());
   SignalOptions reply_options(reply);
   reply_options.add("created_component",pde->uri());
+
+  if (opts.check("order"))
+    throw common::SetupError(FromHere(), "Deprecated option 'order', use 'shape_function'' instead");
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -202,7 +205,7 @@ void Model::signature_add_pde( common::SignalArgs& args )
   common::XML::SignalOptions opts(args);
   opts.add("name",std::string("pde"));
   opts.add("type",std::string("cf3.solver.PDE"));
-  opts.add("order",2u);
+  opts.add("shape_function",std::string("cf3.sdm.core.LegendreGaussLobattoP1"));
   opts.add("regions",std::vector< Handle<Component> >(1,m_domain->handle()));
 }
 
@@ -214,7 +217,7 @@ void Model::signal_create_space( common::SignalArgs& args)
 
   Handle<Dictionary> space = create_space(
       opts.value<std::string>("name"),
-      opts.value<Uint>("order"),
+      opts.value<std::string>("shape_function"),
       opts.value< std::vector< Handle<Component> > >("regions") );
 
   common::XML::SignalFrame reply = args.create_reply(uri());
@@ -228,7 +231,7 @@ void Model::signature_create_space( common::SignalArgs& args )
 {
   common::XML::SignalOptions opts(args);
   opts.add("name",std::string("pde"));
-  opts.add("order",2u);
+  opts.add("shape_function",std::string("cf3.sdm.core.LegendreGaussLobattoP1"));
   opts.add("regions",std::vector< Handle<Component> >(1,m_domain->handle()));
 }
 
@@ -295,14 +298,14 @@ void Model::signature_add_solver( common::SignalArgs& args )
 
 ////////////////////////////////////////////////////////////////////////////////
 
-Handle<solver::PDE> Model::add_pde(const std::string& name, const std::string& type, const Uint order)
+Handle<solver::PDE> Model::add_pde(const std::string& name, const std::string& type, const  std::string& shape_function)
 {
-  return add_pde(name,type,order,std::vector< Handle<Component> >(1,m_domain->handle()));
+  return add_pde(name,type,shape_function,std::vector< Handle<Component> >(1,m_domain->handle()));
 }
 
-Handle<solver::PDE> Model::add_pde(const std::string& name, const std::string& type, const Uint order, const std::vector<Handle<common::Component> > &regions)
+Handle<solver::PDE> Model::add_pde(const std::string& name, const std::string& type, const std::string& shape_function, const std::vector<Handle<common::Component> > &regions)
 {
-  Handle<Dictionary> solution_space = create_space(name,order,regions);
+  Handle<Dictionary> solution_space = create_space(name,shape_function,regions);
 
   Handle<solver::PDE> pde = create_component(name,type)->handle<solver::PDE>();
   pde->mark_basic();

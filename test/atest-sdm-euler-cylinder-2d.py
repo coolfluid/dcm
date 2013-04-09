@@ -22,7 +22,7 @@ rhoE_inf = p_inf/(gamma-1) + 0.5 * rho_inf * u_inf**2
 #p_inf = (g-1) * ( rhoE - 0.5 * rho * ( u**2 ) )
 
 ### Add the Partial Differential Equations to solve
-euler = model.add_pde(name='euler',type='cf3.sdm.equations.euler.Euler2D',order=2)
+euler = model.add_pde(name='euler',type='cf3.sdm.equations.euler.Euler2D',shape_function='cf3.sdm.core.LegendreGaussLobattoP1')
 euler.gamma = gamma
 euler.R = R
 
