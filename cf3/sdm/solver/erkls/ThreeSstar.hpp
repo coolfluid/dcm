@@ -68,7 +68,6 @@ private: // data
   Handle<mesh::Field> m_S2;
   /// Third register necessary for low-storage runge kutta algorithm  3S*
   Handle<mesh::Field> m_backup; // ( = S3 in algorithm )
-  Handle<mesh::Field> m_ws;
   Handle<mesh::Field> m_dt;
 };
 

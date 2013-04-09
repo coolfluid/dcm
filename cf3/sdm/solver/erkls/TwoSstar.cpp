@@ -66,11 +66,6 @@ void TwoSstarImplementation::create_fields()
   else
     m_backup = m_pde->fields()->create_field("backup",m_pde->nb_eqs()).handle<Field>();
 
-  if ( found = m_pde->fields()->get_child("ws") )
-    m_ws = found->handle<Field>();
-  else
-    m_ws = m_pde->fields()->create_field("ws").handle<Field>();
-
   if ( found = m_pde->fields()->get_child("dt") )
     m_dt = found->handle<Field>();
   else
@@ -88,10 +83,8 @@ void TwoSstarImplementation::step()
 
   Time& time = *m_pde->time();
 
-  m_time_step_computer->options().set("wave_speed",m_ws);
+  m_time_step_computer->options().set("wave_speed",m_pde->wave_speed());
   m_time_step_computer->options().set("time_step",m_dt);
-  m_pde->rhs_computer()->options().set("wave_speed",m_ws);
-  m_pde->rhs_computer()->options().set("rhs",m_pde->rhs());
 
   Field& U  = *m_pde->solution();
   Field& R  = *m_pde->rhs();
@@ -111,7 +104,7 @@ void TwoSstarImplementation::step()
     // Set boundary condition
     m_pde->bc()->execute();
     // Compute right-hand-side
-    m_pde->rhs_computer()->execute();
+    m_pde->rhs_computer()->compute_rhs(*m_pde->rhs(),*m_pde->wave_speed());
 
     // Compute time step and backup solution
     if (stage == 0)

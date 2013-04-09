@@ -64,7 +64,6 @@ private: // data
 
   /// Second register necessary for low-storage runge kutta algorithm  2S*
   Handle<mesh::Field> m_backup;
-  Handle<mesh::Field> m_ws;
   Handle<mesh::Field> m_dt;
 };
 

@@ -61,11 +61,6 @@ void RungeKuttaImplementation::create_fields()
       m_rhs_stages[i] = m_pde->fields()->create_field("rhs_"+to_str(i),m_pde->nb_eqs()).handle<Field>();
   }
 
-  if ( found = m_pde->fields()->get_child("ws") )
-    m_ws = found->handle<Field>();
-  else
-    m_ws = m_pde->fields()->create_field("ws").handle<Field>();
-
   if ( found = m_pde->fields()->get_child("dt") )
     m_dt = found->handle<Field>();
   else
@@ -88,7 +83,7 @@ void RungeKuttaImplementation::step()
 
   Time& time = *m_pde->time();
 
-  m_time_step_computer->options().set("wave_speed",m_ws);
+  m_time_step_computer->options().set("wave_speed",m_pde->wave_speed());
   m_time_step_computer->options().set("time_step",m_dt);
 
   Field& U  = *m_pde->solution();
@@ -98,8 +93,8 @@ void RungeKuttaImplementation::step()
   const Real T0 = time.current_time();
   const Uint nb_eqs = m_pde->nb_eqs();
   
+  R = 0.;
   Real dt = 0; 
-
   for (Uint stage=0; stage<nb_stages; ++stage)
   {
     // Set time and iteration for this stage
@@ -110,7 +105,7 @@ void RungeKuttaImplementation::step()
     // Set boundary condition
     m_pde->bc()->execute();
     // Compute right-hand-side
-    m_pde->rhs_computer()->compute_rhs(*m_rhs_stages[stage],*m_ws);
+    m_pde->rhs_computer()->compute_rhs(*m_rhs_stages[stage],*m_pde->wave_speed());
 
     // Compute time step and backup solution
     if (stage == 0)

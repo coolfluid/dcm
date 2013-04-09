@@ -105,7 +105,6 @@ protected:
 
 private: // data
 
-  Handle<mesh::Field> m_ws;
   Handle<mesh::Field> m_dt;
   
   // Registers necessary for general runge kutta algorithm
