@@ -67,6 +67,8 @@ private: // data
   Handle<mesh::Field const> m_field;
   Handle<mesh::Field>       m_field_gradient;
   std::vector<Real>   m_normal;
+  Real m_alpha;
+
 
 }; // end ComputeFieldGradientBR2
 
@@ -75,8 +77,6 @@ private: // data
 template< Uint NDIM >
 void ComputeFieldGradientBR2::compute_gradient()
 {
-  Real m_alpha = 0.5;
-
   using namespace cf3::sdm::core;
   using namespace cf3::mesh;
 
@@ -92,6 +92,15 @@ void ComputeFieldGradientBR2::compute_gradient()
     {
       Handle<Cells> cells = space->support().handle<Cells>();
       Handle<const sdm::core::ShapeFunction> sf = space->shape_function().handle<sdm::core::ShapeFunction>();
+
+      // Set BR2 coefficient alpha to 1/order when alpha is negative
+      m_alpha = options().template value<Real>("alpha");
+      if (m_alpha < 0)
+      {
+        m_alpha = 1./((Real)sf->order()+1.); // P0 --> solution is order 1
+                                             //    --> alpha = 1.
+      }
+
 
       if  ( Handle<Component const> found = space->get_child("metrics") )
       {
@@ -436,11 +445,6 @@ void ComputeFieldGradientBR2::compute_gradient()
             avg_flx_pt_grad[flx_pt] *= 0.5;
           }
         } // end for (face_nb)
-
-        for (Uint flx_pt=0; flx_pt<nb_flx_pts; ++flx_pt)
-        {
-          CFinfo << avg_flx_pt_grad[flx_pt].transpose() << CFendl;
-        }
 
         std::vector<Eigen::Matrix<Real,NDIM,Eigen::Dynamic> > grad_pt_grad(nb_grad_pts, Eigen::Matrix<Real,NDIM,Eigen::Dynamic>(NDIM,nb_vars));
         for (Uint grad_pt=0; grad_pt<nb_grad_pts; ++grad_pt)

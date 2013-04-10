@@ -102,17 +102,15 @@ BOOST_AUTO_TEST_CASE( test_compute_grad )
   rotate_mesh->options().set("axis_point",std::vector<Real>(2,math::Consts::pi()));
   rotate_mesh->execute();
 
-  Handle<Dictionary> solution_space = model->create_space("solution_space","cf3.sdm.core.LegendreGaussLobattoP2", std::vector< Handle<Component> >(1,mesh->handle()));
+  Handle<Dictionary> solution_space = model->create_space("solution_space","cf3.sdm.core.LegendreGaussLobattoP3", std::vector< Handle<Component> >(1,mesh->handle()));
 
   boost::shared_ptr<CreateField> create_field = allocate_component<CreateField>("create_field");
   std::vector<std::string> functions;
   functions.push_back("f=cos(x)+cos(y)");
-//  functions.push_back("U[2]=[x,y]");
   create_field->options().set("functions",functions);
   create_field->options().set("name",std::string("field"));
   create_field->options().set("dict",solution_space->uri());
   create_field->transform(mesh);
-  CFinfo << "pass " << CFendl;
 
   Field& field = *solution_space->get_child_checked("field")->handle<Field>();
   Field& grad = mesh->geometry_fields().create_field("grad","dfdx,dfdy");
