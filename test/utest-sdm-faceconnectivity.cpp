@@ -20,7 +20,7 @@
 #include "cf3/math/MatrixTypes.hpp"
 #include "cf3/math/Defs.hpp"
 #include "cf3/sdm/core/Tensorial.hpp"
-#include "cf3/sdm/core/LegendreGaussLobatto.hpp"
+#include "cf3/sdm/core/LegendreGaussEnd.hpp"
 
 using namespace boost::assign;
 using namespace cf3;
@@ -86,7 +86,7 @@ BOOST_AUTO_TEST_CASE( test_P2_quad )
   enum FaceNumbering {ETA_NEG=0, KSI_POS=1, ETA_POS=2, KSI_NEG=3};
   enum CellOrientation {MATCHED=0, INVERTED=1};
 
-  boost::shared_ptr< Quad<LegendreGaussLobatto,2> > sf = allocate_component< Quad<LegendreGaussLobatto,2> >("sf");
+  boost::shared_ptr< Quad<LegendreGaussEnd,2> > sf = allocate_component< Quad<LegendreGaussEnd,2> >("sf");
 
   // MATCHED, ALSO MEANS NOT ROTATED
   BOOST_CHECK_EQUAL( sf->face_flx_pts(KSI_NEG,MATCHED,0)[0], 8  );
@@ -130,7 +130,7 @@ BOOST_AUTO_TEST_CASE( test_P2_hexa )
 {
   enum FaceNumbering {ZTA_NEG=0, ZTA_POS=1, ETA_NEG=2, KSI_POS=3, ETA_POS=4, KSI_NEG=5};
   enum CellOrientation {MATCHED=0, INVERTED=1};
-  boost::shared_ptr< Hexa<LegendreGaussLobatto,2> > sf = allocate_component< Hexa<LegendreGaussLobatto,2> >("sf");
+  boost::shared_ptr< Hexa<LegendreGaussEnd,2> > sf = allocate_component< Hexa<LegendreGaussEnd,2> >("sf");
 
   BOOST_CHECK_EQUAL( sf->face_flx_pts(KSI_NEG,MATCHED,0)[0], 0   );
   BOOST_CHECK_EQUAL( sf->face_flx_pts(KSI_NEG,MATCHED,0)[1], 12  );

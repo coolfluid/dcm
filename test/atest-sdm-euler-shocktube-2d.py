@@ -20,7 +20,7 @@ load_balance.execute()
 ### Add PDE
 euler = model.add_pde(name='euler',
                       type='cf3.sdm.equations.navierstokes.NavierStokes2D',
-                      shape_function='cf3.sdm.core.LegendreGaussLobattoP2')
+                      shape_function='cf3.sdm.core.LegendreGaussEndP2')
 euler.gamma = 1.4
 euler.R = 287.05
 

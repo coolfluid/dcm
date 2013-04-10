@@ -4,15 +4,15 @@
 // GNU Lesser General Public License version 3 (LGPLv3).
 // See doc/lgpl.txt and doc/gpl.txt for the license text.
 
-/// @file LegendreGaussLobatto.hpp
+/// @file LegendreGaussEnd.hpp
 ///
 /// This file defines the distribution for solution points and flux points
 /// for a 1D shape function, used in tensorial elements.
 /// The flux points are located at the Legendre-Gauss-Lobatto flux-points,
 /// and the solution points coincide as much as possible.
 
-#ifndef cf3_sdm_core_LegendreGaussLobatto_hpp
-#define cf3_sdm_core_LegendreGaussLobatto_hpp
+#ifndef cf3_sdm_core_LegendreGaussEnd_hpp
+#define cf3_sdm_core_LegendreGaussEnd_hpp
 
 
 #include "cf3/math/MatrixTypes.hpp"
@@ -27,9 +27,9 @@ namespace core {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-struct sdm_core_API LegendreGaussLobatto
+struct sdm_core_API LegendreGaussEnd
 {
-  LegendreGaussLobatto(const Uint p)
+  LegendreGaussEnd(const Uint p)
   {
     nb_sol_pts = p+1;
     nb_flx_pts = p+2;
@@ -87,4 +87,4 @@ struct sdm_core_API LegendreGaussLobatto
 } // sdm
 } // cf3
 
-#endif // cf3_sdm_core_LegendreGaussLobatto_hpp
+#endif // cf3_sdm_core_LegendreGaussEnd_hpp

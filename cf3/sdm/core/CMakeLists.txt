@@ -7,8 +7,8 @@ list( APPEND coolfluid_sdm_core_files
   CombinedTermComputer.cpp
   FaceConnectivity.hpp
   FaceConnectivity.cpp
-  LegendreGaussLobatto.hpp
-  LegendreGaussLobatto.cpp
+  LegendreGaussEnd.hpp
+  LegendreGaussEnd.cpp
   LibCore.hpp
   LibCore.cpp
   Metrics.hpp

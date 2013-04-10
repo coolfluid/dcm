@@ -113,7 +113,7 @@ BOOST_AUTO_TEST_CASE( test_advection_1d )
 
   Handle<solver::PDE> pde = model->add_pde( /*name*/  "advectiondiffusion",
                                             /*type*/  "cf3.sdm.equations.advectiondiffusion.AdvectionDiffusion1D",
-                                            /*sf*/    "cf3.sdm.core.LegendreGaussLobattoP1" );
+                                            /*sf*/    "cf3.sdm.core.LegendreGaussEndP1" );
   pde->options().set("a",1.);
   pde->options().set("mu",0.);
 
@@ -193,7 +193,7 @@ BOOST_AUTO_TEST_CASE( test_diffusion_1d )
 
   Handle<solver::PDE> pde = model->add_pde( /*name*/  "advectiondiffusion",
                                             /*type*/  "cf3.sdm.equations.advectiondiffusion.AdvectionDiffusion1D",
-                                            /*sf*/    "cf3.sdm.core.LegendreGaussLobattoP2" );
+                                            /*sf*/    "cf3.sdm.core.LegendreGaussEndP2" );
   pde->options().set("a",0.);
   pde->options().set("mu",1.);
 
@@ -273,7 +273,7 @@ BOOST_AUTO_TEST_CASE( test_advection_2d )
 
   Handle<solver::PDE> pde = model->add_pde( /*name*/  "advectiondiffusion",
                                             /*type*/  "cf3.sdm.equations.advectiondiffusion.AdvectionDiffusion2D",
-                                            /*sf*/    "cf3.sdm.core.LegendreGaussLobattoP0" );
+                                            /*sf*/    "cf3.sdm.core.LegendreGaussEndP0" );
   std::vector<Real> a(dim);
   a[XX] = 0.;
   a[YY] = 1.;
@@ -357,7 +357,7 @@ BOOST_AUTO_TEST_CASE( test_diffusion_2d )
 
   Handle<solver::PDE> pde = model->add_pde( /*name*/  "advectiondiffusion",
                                             /*type*/  "cf3.sdm.equations.advectiondiffusion.AdvectionDiffusion2D",
-                                            /*sf*/    "cf3.sdm.core.LegendreGaussLobattoP1" );
+                                            /*sf*/    "cf3.sdm.core.LegendreGaussEndP1" );
   std::vector<Real> a(dim);
   a[XX] = 0.;
   a[YY] = 0.;

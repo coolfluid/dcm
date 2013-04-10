@@ -205,7 +205,7 @@ void Model::signature_add_pde( common::SignalArgs& args )
   common::XML::SignalOptions opts(args);
   opts.add("name",std::string("pde"));
   opts.add("type",std::string("cf3.solver.PDE"));
-  opts.add("shape_function",std::string("cf3.sdm.core.LegendreGaussLobattoP1"));
+  opts.add("shape_function",std::string("cf3.sdm.core.LegendreGaussEndP1"));
   opts.add("regions",std::vector< Handle<Component> >(1,m_domain->handle()));
 }
 
@@ -231,7 +231,7 @@ void Model::signature_create_space( common::SignalArgs& args )
 {
   common::XML::SignalOptions opts(args);
   opts.add("name",std::string("pde"));
-  opts.add("shape_function",std::string("cf3.sdm.core.LegendreGaussLobattoP1"));
+  opts.add("shape_function",std::string("cf3.sdm.core.LegendreGaussEndP1"));
   opts.add("regions",std::vector< Handle<Component> >(1,m_domain->handle()));
 }
 
