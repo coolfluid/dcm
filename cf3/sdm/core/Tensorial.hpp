@@ -309,8 +309,6 @@ public: // functions
     m_sol_pts.resize(m_nb_sol_pts,DIM_2D);
     m_flx_pts.resize(m_nb_flx_pts,DIM_2D);
     m_flx_pt_dirs.resize(m_nb_flx_pts);
-    m_flx_pt_local_1d.resize(m_nb_flx_pts);
-    m_sol_pt_local_1d.resize(m_nb_sol_pts,std::vector<Uint>(NDIM));
     m_flx_pt_sign.resize(m_nb_flx_pts,1.);
 
     for (Uint s_ksi=0; s_ksi<m_dist_1d.nb_sol_pts; ++s_ksi)
@@ -321,9 +319,6 @@ public: // functions
 
         m_sol_pts(s,KSI) = m_dist_1d.sol_pts[s_ksi];
         m_sol_pts(s,ETA) = m_dist_1d.sol_pts[s_eta];
-
-        m_sol_pt_local_1d[s][KSI]=s_ksi;
-        m_sol_pt_local_1d[s][ETA]=s_eta;
       }
     }
 
@@ -335,7 +330,6 @@ public: // functions
         m_flx_pts(f,KSI) = m_dist_1d.flx_pts[f_ksi];
         m_flx_pts(f,ETA) = m_dist_1d.sol_pts[f_eta];
         m_flx_pt_dirs[f]=KSI;
-        m_flx_pt_local_1d[f]=f_ksi;
 
         // f_eta is ignored as 1) the location may not be on faces; 2) it doesn't count as a face-point in the locally-1D line
         if (f_ksi==0)
@@ -361,7 +355,6 @@ public: // functions
         m_flx_pts(f,KSI) = m_dist_1d.sol_pts[f_ksi];
         m_flx_pts(f,ETA) = m_dist_1d.flx_pts[f_eta];
         m_flx_pt_dirs[f]=ETA;
-        m_flx_pt_local_1d[f]=f_eta;
 
         for (Uint s_eta=0; s_eta<m_dist_1d.nb_sol_pts; ++s_eta)
         {
@@ -523,8 +516,6 @@ private: // data
   RealMatrix                          m_flx_pts;                       ///< Flux point coordinates
   RealMatrix                          m_sol_pts;                       ///< Solution point coordinates
   std::vector<Uint>                   m_flx_pt_dirs;                   ///< Per flux point, the directions this flux point contributes to
-  std::vector<Uint>                   m_flx_pt_local_1d;               ///< Mapping to a 1D flux point
-  std::vector<std::vector<Uint> >     m_sol_pt_local_1d;               ///< Mapping to a 1D solution point
   RealMatrix                          m_face_normals;                  ///< Rows are normals to faces according to FaceNumbering
   std::vector<Uint>                   m_interior_flx_pts;              ///< Flux points that lie inside the cell, not on the faces
   std::vector< std::vector< std::vector<Uint> > > m_face_flx_pts;      ///< Flux points that on the cell faces
@@ -565,8 +556,6 @@ public: // functions
     m_sol_pts.resize(m_nb_sol_pts,DIM_3D);
     m_flx_pts.resize(m_nb_flx_pts,DIM_3D);
     m_flx_pt_dirs.resize(m_nb_flx_pts);
-    m_flx_pt_local_1d.resize(m_nb_flx_pts);
-    m_sol_pt_local_1d.resize(m_nb_sol_pts,std::vector<Uint>(DIM_3D));
     m_flx_pt_sign.resize(m_nb_flx_pts,1.);
 
     // Define solution points
@@ -581,10 +570,6 @@ public: // functions
           m_sol_pts(s,KSI) = m_dist_1d.sol_pts[s_ksi];
           m_sol_pts(s,ETA) = m_dist_1d.sol_pts[s_eta];
           m_sol_pts(s,ZTA) = m_dist_1d.sol_pts[s_zta];
-
-          m_sol_pt_local_1d[s][KSI]=s_ksi;
-          m_sol_pt_local_1d[s][ETA]=s_eta;
-          m_sol_pt_local_1d[s][ZTA]=s_zta;
         }
       }
     }
@@ -601,7 +586,6 @@ public: // functions
           m_flx_pts(f,ETA) = m_dist_1d.sol_pts[f_eta];
           m_flx_pts(f,ZTA) = m_dist_1d.sol_pts[f_zta];
           m_flx_pt_dirs[f]=KSI;
-          m_flx_pt_local_1d[f]=f_ksi;
 
           // f_eta and f_zta are ignored as 1) the location may not be on faces; 2) it doesn't count as a face-point in the locally-1D line
           if (f_ksi==0)
@@ -633,7 +617,6 @@ public: // functions
           m_flx_pts(f,ZTA) = m_dist_1d.sol_pts[f_zta];
 
           m_flx_pt_dirs[f]=ETA;
-          m_flx_pt_local_1d[f]=f_eta;
 
           // f_ksi and f_zta are ignored as 1) the location may not be on faces; 2) it doesn't count as a face-point in the locally-1D line
           if (f_eta==0)
@@ -666,7 +649,6 @@ public: // functions
           m_flx_pts(f,ZTA) = m_dist_1d.flx_pts[f_zta];
 
           m_flx_pt_dirs[f]=ZTA;
-          m_flx_pt_local_1d[f]=f_zta;
 
           // f_ksi and f_eta are ignored as 1) the location may not be on faces; 2) it doesn't count as a face-point in the locally-1D line
           if (f_zta==0)
@@ -941,11 +923,6 @@ private: // data
   RealMatrix                          m_flx_pts;                              ///< Flux point coordinates
   RealMatrix                          m_sol_pts;                              ///< Solution point coordinates
   std::vector< Uint >                 m_flx_pt_dirs;                          ///< Per flux point, the directions this flux point contributes to
-  std::vector< std::vector<Uint> >    m_interp_grad_flx_to_sol_used_sol_pts;  ///< Per flux point, the solution points used in the derivatives
-  std::vector< std::vector<Uint> >    m_interp_sol_to_flx_used_sol_pts;       ///< Per flux point, the solution points used to interpolate it
-  std::vector< std::vector<Uint> >    m_interp_flx_to_sol_used_sol_pts;       ///< Per flux point, the solution points used in the interpolation
-  std::vector<Uint>                   m_flx_pt_local_1d;                      ///< Mapping to a 1D flux point
-  std::vector<std::vector<Uint> >     m_sol_pt_local_1d;                      ///< Mapping to a 1D solution point
   std::vector< std::vector< std::vector< std::vector<Uint> > > > m_face_flx_pts;      ///< Flux points that on the cell faces
   RealMatrix                          m_face_normals;                         ///< Rows are normals to faces according to FaceNumbering
   std::vector<Uint>                   m_interior_flx_pts;                     ///< Flux points that lie inside the cell, not on the faces

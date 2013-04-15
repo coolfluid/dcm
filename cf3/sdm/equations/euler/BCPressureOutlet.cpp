@@ -41,7 +41,7 @@ BCPressureOutlet2D::BCPressureOutlet2D(const std::string& name) :
 
 void BCPressureOutlet2D::config_p()
 { 
-  m_function_p.parse(options().option("p").value_str()); 
+  m_function_p.parse(options().option("p").value_str(),"x,y");
 }
 
 /////////////////////////////////////////////////////////////////////////////

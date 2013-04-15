@@ -7,6 +7,8 @@
 #ifndef cf3_sdm_core_Metrics_hpp
 #define cf3_sdm_core_Metrics_hpp
 
+#include "common/Foreach.hpp"
+
 #include "cf3/mesh/Cells.hpp"
 #include "cf3/mesh/Space.hpp"
 #include "cf3/mesh/Field.hpp"
