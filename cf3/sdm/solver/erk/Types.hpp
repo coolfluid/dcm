@@ -67,7 +67,7 @@ typedef RungeKuttaT<butcher_tableau::Heun3>        Heun3;
 /// @brief Classic RK44 time integration method
 typedef RungeKuttaT<butcher_tableau::ClassicRK44>  ClassicRK44;
 
-/// @brief 5-stage 4th-order  SSPRK time integration method
+/// @brief 5-stage 4th-order SSPRK time integration method
 typedef RungeKuttaT<butcher_tableau::SSPRK54>      SSPRK54;
 
 /// @brief 6-stage 5th-order RK time integration method
@@ -111,8 +111,9 @@ struct ForwardEuler : ButcherTableau::Coefficients
 /// @brief Heun2 Butcher tableau coefficients
 /// 
 /// 2-stage 2nd-order Heun method
-/// @ref K. Heun: Neue methode zur approximativen integration der differentialgleichungen einer unabhangigen variable
-///      Z. Angew. Math. Phys., 45 (1900), 23–38
+/// @ref K. Heun: Neue methode zur approximativen integration der
+///      differentialgleichungen einer unabhangigen variable.
+///      Z. Angew. Math. Phys., 45 (1900), 23–38.
 /// @verbatim
 /// 0   |
 /// 2/3 | 2/3
@@ -149,8 +150,8 @@ struct MidPoint : ButcherTableau::Coefficients
 /// @brief classic RK33 Butcher tableau coefficients
 /// 
 /// 3-stage 3rd-order Kutta's method 
-/// @ref W. Kutta: Beitrag zur naherungsweisen integration totaler differentialgleichungen
-///      Z. Angew. Math. Phys., 46 (1901), 435–453
+/// @ref W. Kutta: Beitrag zur naherungsweisen integration totaler
+///      differentialgleichungen. Z. Angew. Math. Phys., 46 (1901), 435–453.
 /// @verbatim
 /// 0   |
 /// 1/2 | 1/2
@@ -170,8 +171,9 @@ struct ClassicRK33 : ButcherTableau::Coefficients
 /// @brief Heun3 Butcher tableau coefficients
 ///
 /// 3-stage 23rd-order Heun method
-/// @ref K. Heun: Neue methode zur approximativen integration der differentialgleichungen einer unabhangigen variable
-///      Z. Angew. Math. Phys., 45 (1900), 23–38
+/// @ref K. Heun: Neue methode zur approximativen integration der
+///      differentialgleichungen einer unabhangigen variable.
+///      Z. Angew. Math. Phys., 45 (1900), 23–38.
 /// @verbatim
 /// 0   |
 /// 1/3 | 1/3  
@@ -194,8 +196,8 @@ struct Heun3 : ButcherTableau::Coefficients
 /// @brief classic RK44 Butcher tableau coefficients
 ///
 /// 4-stage 4th-order Kutta's method 
-/// @ref W. Kutta: Beitrag zur naherungsweisen Integration totaler differentialgleichungen
-///      Z. Angew. Math. Phys., 46 (1901), 435–453
+/// @ref W. Kutta: Beitrag zur naherungsweisen Integration totaler
+///      differentialgleichungen. Z. Angew. Math. Phys., 46 (1901), 435–453.
 /// @verbatim
 /// 0   |
 /// 1/2 | 1/2
@@ -216,9 +218,9 @@ struct ClassicRK44 : ButcherTableau::Coefficients
 /// @brief  SSPRK54 Butcher tableau coefficients
 ///
 /// Optimal 5-stage 4th-order SSPRK method
-/// @ref R. J. Spiteri and S. J. Ruuth: A new class of optimal high order strong stability preserving time discretization methods
-///      SIAM Journal of Numerical Analysis, 40 (2002), 469-491
-///      doi:10.1137/S0036142901389025
+/// @ref R. J. Spiteri and S. J. Ruuth: A new class of optimal high order
+///      strong stability preserving time discretization methods.
+///      SIAM Journal of Numerical Analysis, 40 (2002), 469-491.
 /// @verbatim
 /// 0                |
 /// 0.39175222700392 | 0.39175222700392
@@ -267,8 +269,10 @@ struct RK65 : ButcherTableau::Coefficients
 /// @brief RKF65 Butcher tableau coefficients
 ///
 /// 6-stage 5th-order RKF method extracted form the RKF6(4)5 pair
-/// @ref E. Fehlberg. Low-order classical Runge-Kutta formulas with stepsize control and their application to some heat transfer
-///      Technical report, NASA TR R-315, National Aeronautics and Space Administration, Marshall Space Flight Center, Marshall, AL, 1969.
+/// @ref E. Fehlberg. Low-order classical Runge-Kutta formulas with stepsize
+///      control and their application to some heat transfer
+///      Technical report, NASA TR R-315, National Aeronautics and Space
+///      Administration, Marshall Space Flight Center, Marshall, AL, 1969.
 /// @verbatim
 /// 0     |
 /// 1/4   | 1/4
