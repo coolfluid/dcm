@@ -91,7 +91,7 @@ void ThreeSstarImplementation::step()
   m_time_step_computer->options().set("wave_speed",m_pde->wave_speed());
   m_time_step_computer->options().set("time_step",m_dt);
 
-  Field& S1 = *m_pde->solution();;
+  Field& S1 = *m_pde->solution();
   Field& S2 = *m_S2;
   Field& S3 = *m_backup;
   Field& R  = *m_pde->rhs();

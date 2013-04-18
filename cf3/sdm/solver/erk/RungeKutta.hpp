@@ -124,6 +124,7 @@ private: // data
 /// - order = 4 --> classic 4-stage 4th-order Runge-Kutta method (ClassicRK44)
 /// - order = 5 --> 6-stage 5th-order Runge-Kutta-Fehlberg method (from the Fehlberg pair) (RKF65)
 /// If nothing is configured, ClassicRK44 is assumed.
+///
 /// @author Willem Deconinck
 class sdm_solver_erk_API RungeKutta : public RungeKuttaImplementation {
 
@@ -151,6 +152,7 @@ private: // functions
 /// "cf3.sdm.explicit.<name>"  with <name> to be replaced by
 /// the name of the Butcher tableau. For a list of Butcher tableaux, check
 /// sdm/explicit/Types.hpp
+///
 /// @author Willem Deconinck
 template <typename BUTCHER_TABLEAU>
 class RungeKuttaT : public RungeKuttaImplementation {
