@@ -22,21 +22,23 @@ namespace erkls {
 
 /////////////////////////////////////////////////////////////////////////////////////
 
-/// Runge-Kutta low storage integration method using only 2 registers
-/// @ref David I. Ketcheson: Runge-Kutta methods with minimum storage implementations
-///      Journal of Computational Physics 229 (2010) 1763–1773
+/// Runge-Kutta low storage integration method using only 3 registers
+/// @ref David I. Ketcheson: Runge-Kutta methods with minimum storage
+///      implementations. Journal of Computational Physics 229 (2010) 1763–1773
 ///      doi:10.1016/j.jcp.2009.11.006
 /// The order is not necessarily the same as the number of stages "m"
 /// The order depends on the coefficients alpha and beta
-/// Algorithm 2S* with m = number of stages (not necessarily same as order)
+/// Algorithm 3S* with m = number of stages (not necessarily same as order)
 /// @code
-/// S1 := U(t=n)   S2 := U(t=n)
+/// S1 := U(t=n)   S2 := 0   S3 := U(t=n)
 /// for i = 2:m+1 do
-///    S1 := (1-alpha(i,1))*S1 + alpha(i,1)*S2 + beta(i,i-1)*dt*F(S1)
+///     S2 := S2 + delta(i-1)*S1
+///     S1 := gamma(i,1)*S1 + gamma(i,2)*S2 + gamma(i,3)*S3 + beta(i,i-1)*dt*F(S1)
 /// end
 /// U(t=n+1) = S1
 /// @endcode
 /// @author Willem Deconinck
+/// @author Matteo Parsani
 class sdm_solver_erkls_API ThreeSstarImplementation : public cf3::solver::PDESolver {
 
 public: // functions
