@@ -108,7 +108,6 @@ public:
     cf3_always_assert(m_time_step_computer);
     if (m_coeffs->cfl() > 0 && m_time_step_computer->options().check("cfl") )
       m_time_step_computer->options().set("cfl",m_coeffs->cfl());
-    std::cout << "constructed" << std::endl;
   }
 };
 
