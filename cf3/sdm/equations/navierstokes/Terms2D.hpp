@@ -41,16 +41,19 @@ public: // types
   typedef physics::navierstokes::navierstokes2d::Data DATA;
 
 public: // Variable and PhysData computation
-    
+
+  // About 50% of execution is spent in this class for P1 with LUSGS
+
   /// @brief Compute variables and gradients in a given element point
-  ///
-  /// The interpolation and gradient reconstructions, as well as
+  // 32% of execution!!! WHY
   void get_variables( const mesh::Space& space,
                       const Uint elem_idx,
                       const ColVector_NDIM& coords,
                       const mesh::ReconstructPoint& interpolation,
                       const std::vector<mesh::ReconstructPoint>& gradient,
+                      const Matrix_NDIMxNDIM& jacobian,
                       const Matrix_NDIMxNDIM& jacobian_inverse,
+                      const Real& jacobian_determinant,
                       RowVector_NVAR& vars,
                       RowVector_NGRAD& gradvars,
                       Matrix_NDIMxNGRAD& gradvars_grad );
@@ -59,6 +62,7 @@ public: // Variable and PhysData computation
   void set_phys_data_constants( DATA& phys_data );
 
   /// @brief Compute the data from computed variables and gradients
+  //  12% of execution!!!
   void compute_phys_data( const ColVector_NDIM& coords,
                           const RowVector_NVAR& vars,
                           const RowVector_NGRAD& gradvars,
@@ -67,18 +71,21 @@ public: // Variable and PhysData computation
   
 public: // Flux computations
 
+  // 0.2% execution
   static void compute_convective_flux( const DATA& p, const ColVector_NDIM& normal,
                                        RowVector_NEQS& flux, Real& wave_speed )
   {
     physics::euler::euler2d::compute_convective_flux(p,normal,flux,wave_speed);
   }
 
+  // 5.6% execution
   void compute_riemann_flux( const DATA& left, const DATA& right, const ColVector_NDIM& normal,
                              RowVector_NEQS& flux, Real& wave_speed )
   {
     m_riemann_solver->compute_riemann_flux(left,right,normal,flux,wave_speed);
   }
 
+  // 1.5% execution
   static void compute_diffusive_flux(const DATA &p, const ColVector_NDIM &normal,
                                      RowVector_NEQS &flux, Real &wave_speed);
 
@@ -93,7 +100,7 @@ private: // configuration
   std::string m_riemann_solver_type;
   Real m_gamma;
   Real m_R;
-  Real m_k;
+  Real m_kappa;
   Real m_mu;
 };
 

@@ -55,7 +55,9 @@ public: // types
                       const typename physics::MatrixTypes<NB_DIM,NB_DIM,NB_DIM,NB_DIM>::ColVector_NDIM& coords,
                       const mesh::ReconstructPoint& interpolation,
                       const std::vector<mesh::ReconstructPoint>& gradient,
+                      const typename physics::MatrixTypes<NB_DIM,NB_DIM,NB_DIM,NB_DIM>::Matrix_NDIMxNDIM& jacobian,
                       const typename physics::MatrixTypes<NB_DIM,NB_DIM,NB_DIM,NB_DIM>::Matrix_NDIMxNDIM& jacobian_inverse,
+                      const Real& jacobian_determinant,
                       typename physics::MatrixTypes<NB_DIM,NB_DIM,NB_DIM,NB_DIM>::RowVector_NVAR& vars,
                       typename physics::MatrixTypes<NB_DIM,NB_DIM,NB_DIM,NB_DIM>::RowVector_NGRAD& gradvars,
                       typename physics::MatrixTypes<NB_DIM,NB_DIM,NB_DIM,NB_DIM>::Matrix_NDIMxNGRAD& gradvars_grad )

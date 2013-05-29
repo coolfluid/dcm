@@ -42,14 +42,16 @@ Terms1D::Terms1D( const std::string& name ) :
 }
 
 void Terms1D::get_variables( const mesh::Space& space,
-                            const Uint elem_idx,
-                            const ColVector_NDIM& coords,
-                            const mesh::ReconstructPoint& interpolation,
-                            const std::vector<mesh::ReconstructPoint>& gradient,
-                            const Matrix_NDIMxNDIM& jacobian_inverse,
-                            RowVector_NVAR& vars,
-                            RowVector_NGRAD& gradvars,
-                            Matrix_NDIMxNGRAD& gradvars_grad )
+                             const Uint elem_idx,
+                             const ColVector_NDIM& coords,
+                             const mesh::ReconstructPoint& interpolation,
+                             const std::vector<mesh::ReconstructPoint>& gradient,
+                             const Matrix_NDIMxNDIM& jacobian,
+                             const Matrix_NDIMxNDIM& jacobian_inverse,
+                             const Real& jacobian_determinant,
+                             RowVector_NVAR& vars,
+                             RowVector_NGRAD& gradvars,
+                             Matrix_NDIMxNGRAD& gradvars_grad )
 {
   mesh::Connectivity::ConstRow nodes = space.connectivity()[elem_idx];
   vars.setZero();

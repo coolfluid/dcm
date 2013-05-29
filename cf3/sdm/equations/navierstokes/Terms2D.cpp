@@ -33,7 +33,11 @@ common::ComponentBuilder<core::CombinedTermComputer<Diffusion2D>,solver::TermCom
 
 Terms2D::Terms2D( const std::string& name ) :
   solver::TermBase<2,4,4,3>(name),
-  m_riemann_solver_type("Roe")
+  m_riemann_solver_type("Roe"),
+  m_gamma(1.4),
+  m_R(287.05),
+  m_kappa(2.601e-2),
+  m_mu(1.806e-5)
 {
   options().add("gamma",m_gamma).link_to(&m_gamma)
       .description("Heat capacity ratio (Cp/Cv)")
@@ -45,8 +49,8 @@ Terms2D::Terms2D( const std::string& name ) :
       .description("Riemann solver")
       .attach_trigger( boost::bind( &Terms2D::config_riemann_solver, this) );
   config_riemann_solver();
-  options().add("k",m_k).link_to(&m_k)
-      .description("Heat conduction")
+  options().add("kappa",m_kappa).link_to(&m_kappa)
+      .description("Thermal conduction")
       .mark_basic();
   options().add("mu",m_mu).link_to(&m_mu)
       .description("Dynamic viscosity")
@@ -58,7 +62,9 @@ void Terms2D::get_variables( const mesh::Space& space,
                              const ColVector_NDIM& coords,
                              const mesh::ReconstructPoint& interpolation,
                              const std::vector<mesh::ReconstructPoint>& gradient,
+                             const Matrix_NDIMxNDIM& jacobian,
                              const Matrix_NDIMxNDIM& jacobian_inverse,
+                             const Real& jacobian_determinant,
                              RowVector_NVAR& vars,
                              RowVector_NGRAD& gradvars,
                              Matrix_NDIMxNGRAD& gradvars_grad )
@@ -74,12 +80,12 @@ void Terms2D::get_variables( const mesh::Space& space,
       vars[eq] += C * solution()->array()[nodes[n]][eq];
     }
   }
-  Real rho = vars[0];
-  Real u = vars[1]/rho;
-  Real v = vars[2]/rho;
-  Real E = vars[3]/rho;
-  Real p = (m_gamma-1.)*rho*(E - 0.5*(u*u+v*v));
-  Real T = p/(rho*m_R);
+  const Real rho = vars[0];
+  const Real u = vars[1]/rho;
+  const Real v = vars[2]/rho;
+  const Real E = vars[3]/rho;
+  const Real p = (m_gamma-1.)*rho*(E - 0.5*(u*u+v*v));
+  const Real T = p/(rho*m_R);
 
   gradvars[0] = u;
   gradvars[1] = v;
@@ -92,13 +98,13 @@ void Terms2D::get_variables( const mesh::Space& space,
     {
       const Real C = gradient[d].coeff(n);
 
-      Real rho = solution()->array()[nodes[n]][0];
-      Real u = solution()->array()[nodes[n]][1]/rho;
-      Real v = solution()->array()[nodes[n]][2]/rho;
-      Real E = solution()->array()[nodes[n]][3]/rho;
-      Real U2 = u*u+v*v;
-      Real p = (m_gamma-1.)*rho*(E - 0.5*U2);
-      Real T = p/(rho*m_R);
+      const Real rho = solution()->array()[nodes[n]][0];
+      const Real u = solution()->array()[nodes[n]][1]/rho;
+      const Real v = solution()->array()[nodes[n]][2]/rho;
+      const Real E = solution()->array()[nodes[n]][3]/rho;
+      const Real U2 = u*u+v*v;
+      const Real p = (m_gamma-1.)*rho*(E - 0.5*U2);
+      const Real T = p/(rho*m_R);
 
       gradvars_grad(d,0) += C * u;
       gradvars_grad(d,1) += C * v;
@@ -113,7 +119,7 @@ void Terms2D::set_phys_data_constants( DATA& phys_data )
   phys_data.gamma=m_gamma;
   phys_data.R=m_R;
   phys_data.mu = m_mu;
-  phys_data.k = m_k;
+  phys_data.kappa = m_kappa;
   phys_data.Cp = m_gamma*m_R/(m_gamma-1.);
 }
 

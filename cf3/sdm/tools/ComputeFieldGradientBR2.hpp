@@ -66,7 +66,7 @@ private: // data
 
   Handle<mesh::Field const> m_field;
   Handle<mesh::Field>       m_field_gradient;
-  std::vector<Real>   m_normal;
+//  std::vector<Real>         m_normal;
   Real m_alpha;
 
 
@@ -81,10 +81,13 @@ void ComputeFieldGradientBR2::compute_gradient()
   using namespace cf3::mesh;
 
   Handle< Metrics<NDIM> > metrics;
+  Handle< ElementMetrics<NDIM> > element_metrics;
+  Handle< ElementMetrics<NDIM> > neighbour_element_metrics;
+
   Handle< CellConnectivity >  connected;
 
   const Uint nb_vars = m_field->row_size();
-
+  bool activate_BR2 = options().value<bool>("BR2");
   // Loop over patches
   boost_foreach(const Handle<Space>& space, m_field->spaces())
   {
@@ -93,12 +96,17 @@ void ComputeFieldGradientBR2::compute_gradient()
       Handle<Cells> cells = space->support().handle<Cells>();
       Handle<const sdm::core::ShapeFunction> sf = space->shape_function().handle<sdm::core::ShapeFunction>();
 
+      Handle<Space const> grad_space = m_field_gradient->space(*cells).handle<Space>();
+      Handle<const mesh::ShapeFunction> grad_sf = grad_space->shape_function().handle<mesh::ShapeFunction>();
+      const Uint nb_grad_pts = grad_sf->nb_nodes();
+
+
       // Set BR2 coefficient alpha to 1/order when alpha is negative
       m_alpha = options().template value<Real>("alpha");
       if (m_alpha < 0)
       {
-        m_alpha = 1./((Real)sf->order()+1.); // P0 --> solution is order 1
-                                             //    --> alpha = 1.
+        if (sf->order()==0) m_alpha = 1.; // for consistency
+        else m_alpha = 0.5;
       }
 
 
@@ -125,26 +133,24 @@ void ComputeFieldGradientBR2::compute_gradient()
       const Uint nb_faces = cells->element_type().nb_faces();
       const Uint nb_face_pts = sf->face_flx_pts(0,0,0).size();
 
-      std::vector< Space const* > neighbor_space(nb_faces);
-      std::vector< Uint > neighbor_elem_idx(nb_faces);
+      std::vector< Space const* > neighbour_space(nb_faces);
+      std::vector< Uint > neighbour_elem_idx(nb_faces);
       std::vector< std::vector<Uint> > face_pts(nb_faces, std::vector<Uint>(nb_face_pts));
-      std::vector< std::vector<Uint> > neighbor_face_pts(nb_faces, std::vector<Uint>(nb_face_pts));
+      std::vector< std::vector<Uint> > neighbour_face_pts(nb_faces, std::vector<Uint>(nb_face_pts));
 
-      std::vector<RealVector> flx_pt_vars(nb_flx_pts,RealVector(nb_vars));
-      std::vector<RealVector> neighbor_flx_pt_vars(nb_flx_pts,RealVector(nb_vars));
-      std::vector<RealVector> avg_flx_pt_vars(nb_flx_pts,RealVector(nb_vars));
-      std::vector<Eigen::Matrix<Real,NDIM,Eigen::Dynamic> > flx_pt_grad(nb_flx_pts, Eigen::Matrix<Real,NDIM,Eigen::Dynamic>(NDIM,nb_vars));
-      std::vector<Eigen::Matrix<Real,NDIM,Eigen::Dynamic> > neighbor_flx_pt_grad(nb_flx_pts, Eigen::Matrix<Real,NDIM,Eigen::Dynamic>(NDIM,nb_vars));
-      std::vector<Eigen::Matrix<Real,NDIM,Eigen::Dynamic> > avg_flx_pt_grad(nb_flx_pts, Eigen::Matrix<Real,NDIM,Eigen::Dynamic>(NDIM,nb_vars));
-      std::vector<Eigen::Matrix<Real,NDIM,Eigen::Dynamic> > LambdaL(nb_flx_pts, Eigen::Matrix<Real,NDIM,Eigen::Dynamic>(NDIM,nb_vars));
-      std::vector<Eigen::Matrix<Real,NDIM,Eigen::Dynamic> > LambdaR(nb_flx_pts, Eigen::Matrix<Real,NDIM,Eigen::Dynamic>(NDIM,nb_vars));
-      std::vector<RealVector> jump(nb_flx_pts, RealVector(nb_vars));
-      std::vector<RealVector> neighbor_jump(nb_flx_pts, RealVector(nb_vars));
+      typedef  Eigen::Matrix<Real,NDIM,Eigen::Dynamic> GradientMatrix;
+      std::vector< GradientMatrix >   flx_pt_grad           ( nb_flx_pts,  GradientMatrix(NDIM,nb_vars) );
+      std::vector< GradientMatrix >   neighbour_flx_pt_grad  ( nb_flx_pts,  GradientMatrix(NDIM,nb_vars) );
+      std::vector< GradientMatrix >   avg_flx_pt_grad       ( nb_flx_pts,  GradientMatrix(NDIM,nb_vars) );
+      std::vector< GradientMatrix >   LambdaL               ( nb_flx_pts,  GradientMatrix(NDIM,nb_vars) );
+      std::vector< GradientMatrix >   LambdaR               ( nb_flx_pts,  GradientMatrix(NDIM,nb_vars) );
+      std::vector< RealVector     >   jump                  ( nb_flx_pts,  RealVector(nb_vars)          );
+      std::vector< RealVector     >   neighbour_jump         ( nb_flx_pts,  RealVector(nb_vars)          );
+      std::vector< RealVector     >   flx_pt_vars           ( nb_flx_pts,  RealVector(nb_vars)          );
+      std::vector< RealVector     >   neighbour_flx_pt_vars  ( nb_flx_pts,  RealVector(nb_vars)          );
+      std::vector< RealVector     >   avg_flx_pt_vars       ( nb_flx_pts,  RealVector(nb_vars)          );
+      std::vector< GradientMatrix >   grad_pt_grad          ( nb_grad_pts, GradientMatrix(NDIM,nb_vars) );
 
-
-      Handle<Space const> grad_space = m_field_gradient->space(*cells).handle<Space>();
-      Handle<const mesh::ShapeFunction> grad_sf = grad_space->shape_function().handle<mesh::ShapeFunction>();
-      const Uint nb_grad_pts = grad_sf->nb_nodes();
 
       std::vector< std::vector< mesh::ReconstructPoint > >  line_interpolation_from_flx_pts_to_grad_pt;
       line_interpolation_from_flx_pts_to_grad_pt.resize(nb_grad_pts, std::vector<mesh::ReconstructPoint>(NDIM));
@@ -160,32 +166,18 @@ void ComputeFieldGradientBR2::compute_gradient()
       }
 
 
-//      std::vector< std::vector< mesh::ReconstructPoint > >  derivation_from_flx_pts_to_grad_pt;
-//      derivation_from_flx_pts_to_grad_pt.resize(nb_grad_pts, std::vector<mesh::ReconstructPoint >(NDIM));
-//      for (Uint grad_pt=0; grad_pt<nb_grad_pts; ++grad_pt)
-//      {
-//        for (Uint d=0; d<NDIM; ++d)
-//        {
-//          DerivativeInPointFromFlxPts::build_coefficients( interpolation_from_flx_pts_to_grad_pt[grad_pt][d],
-//                                                           d,
-//                                                           grad_sf->local_coordinates().row(grad_pt),
-//                                                           sf );
-//        }
-//      }
-
-
       // Loop over cells
       Uint nb_elems = space->size();
       for (Uint e=0; e<nb_elems; ++e)
       {
         // Compute cell metrics
         connected->compute_cell(*cells,e);
-        metrics->compute_element(e);
+        element_metrics = metrics->element(e);
 
         for (Uint face_nb=0; face_nb<nb_faces; ++face_nb)
         {
-          neighbor_space[face_nb] = &m_field->dict().space(*connected->neighbor_cells()[face_nb].comp);
-          neighbor_elem_idx[face_nb] = connected->neighbor_cells()[face_nb].idx;
+          neighbour_space[face_nb] = &m_field->dict().space(*connected->neighbor_cells()[face_nb].comp);
+          neighbour_elem_idx[face_nb] = connected->neighbor_cells()[face_nb].idx;
 
           const std::vector<Uint>& face_flx_pts  = sf->face_flx_pts(
               face_nb,
@@ -197,19 +189,19 @@ void ComputeFieldGradientBR2::compute_gradient()
             for (Uint f=0; f<nb_face_pts; ++f)
             {
               face_pts[face_nb][f]          = face_flx_pts[f];
-              neighbor_face_pts[face_nb][f] = f;
+              neighbour_face_pts[face_nb][f] = f;
             }
           }
           else
           {
-            const std::vector<Uint>& neighbor_face_flx_pts = sf->face_flx_pts(
+            const std::vector<Uint>& neighbour_face_flx_pts = sf->face_flx_pts(
                 connected->neighbour_face_nb()[face_nb],
                 connected->neighbour_orientations()[face_nb],
                 connected->neighbour_rotations()[face_nb] );
             for (Uint f=0; f<nb_face_pts; ++f)
             {
               face_pts[face_nb][f]  = face_flx_pts[f];
-              neighbor_face_pts[face_nb][f] = neighbor_face_flx_pts[f];
+              neighbour_face_pts[face_nb][f] = neighbour_face_flx_pts[f];
             }
           }
 
@@ -230,7 +222,6 @@ void ComputeFieldGradientBR2::compute_gradient()
               flx_pt_vars[flx_pt][v] += C * m_field->array()[nodes[n]][v];
             }
           }
-//          CFinfo << "var = " << flx_pt_vars[flx_pt] << CFendl;
           avg_flx_pt_vars[flx_pt] = flx_pt_vars[flx_pt];
 
           const std::vector<mesh::ReconstructPoint>& gradient = metrics->gradient_from_sol_pts_to_flx_pt(flx_pt);
@@ -246,95 +237,53 @@ void ComputeFieldGradientBR2::compute_gradient()
               }
             }
           }
-//          flx_pt_grad[flx_pt] = metrics->flx_pt_Jinv(flx_pt)*flx_pt_grad[flx_pt];
-//          CFinfo << flx_pt_grad[flx_pt].transpose() << CFendl;
+          flx_pt_grad[flx_pt] = element_metrics->flx_pt_Jinv(flx_pt) * flx_pt_grad[flx_pt];
           avg_flx_pt_grad[flx_pt] = flx_pt_grad[flx_pt];
-
-//          CFinfo << flx_pt_vars[flx_pt] << CFendl;
-          //          m_term->get_variables( /*in*/  *m_space, elem_idx,
-          //                                 /*in*/  m_metrics->flx_pt_coords(flx_pt),
-          //                                 /*in*/  m_metrics->interpolation_from_sol_pts_to_flx_pt(flx_pt),
-          //                                 /*in*/  m_metrics->gradient_from_sol_pts_to_flx_pt(flx_pt),
-          //                                 /*in*/  m_metrics->flx_pt_Jinv(flx_pt),
-          //                                 /*out*/ m_flx_pt_vars[flx_pt],
-          //                                 /*out*/ m_flx_pt_gradvars[flx_pt],
-          //                                 /*out*/ m_flx_pt_gradvars_grad[flx_pt] );
-
         }
 
         for (Uint face_nb=0; face_nb<nb_faces; ++face_nb)
         {
+          neighbour_element_metrics = metrics->element(neighbour_elem_idx[face_nb]);
           for (Uint f=0; f<nb_face_pts; ++f)
           {
             Uint flx_pt = face_pts[face_nb][f];
-            Uint neighbor_flx_pt = neighbor_face_pts[face_nb][f];
+            Uint neighbour_flx_pt = neighbour_face_pts[face_nb][f];
 
             if ( connected->is_bdry_face()[face_nb] )  // Gradient is copied from inside
             {
-              mesh::Connectivity::ConstRow nodes = neighbor_space[face_nb]->connectivity()[neighbor_elem_idx[face_nb]];
+              mesh::Connectivity::ConstRow nodes = neighbour_space[face_nb]->connectivity()[neighbour_elem_idx[face_nb]];
 
               const mesh::ReconstructPoint& interpolation = metrics->copy_pt(f); // <------ double check!!!
-              neighbor_flx_pt_vars[flx_pt].setZero();
+              neighbour_flx_pt_vars[flx_pt].setZero();
               boost_foreach( Uint n, interpolation.used_points() )
               {
                 const Real C = interpolation.coeff(n);
                 for (Uint v=0; v<nb_vars; ++v)
                 {
-                  neighbor_flx_pt_vars[flx_pt][v] += C * m_field->array()[nodes[n]][v];
+                  neighbour_flx_pt_vars[flx_pt][v] += C * m_field->array()[nodes[n]][v];
                 }
               }
 
-
-
-              const std::vector<mesh::ReconstructPoint>& gradient = metrics->zero_grad(); // <------ double check!!!
-              neighbor_flx_pt_grad[flx_pt].setZero();
-              for (Uint d=0; d<NDIM; ++d)
-              {
-                boost_foreach( Uint n, gradient[d].used_points() )
-                {
-                  const Real C = gradient[d].coeff(n);
-                  for (Uint v=0; v<nb_vars; ++v)
-                  {
-                    neighbor_flx_pt_grad[flx_pt](d,v) += C * m_field->array()[nodes[n]][v];
-                  }
-                }
-              }
-
-              // ---> decide to just use inside gradient instead!
-              neighbor_flx_pt_grad[flx_pt] = flx_pt_grad[flx_pt];
-//              neighbor_flx_pt_grad[flx_pt] = metrics->flx_pt_Jinv(flx_pt)*neighbor_flx_pt_grad[flx_pt];
-//              CFinfo << neighbor_flx_pt_grad[flx_pt].transpose() << CFendl;
-
-//              m_term->get_variables( /*in*/  *m_neighbor_space[face_nb], m_neighbor_elem_idx[face_nb],
-//                                     /*in*/  m_metrics->flx_pt_coords(flx_pt),
-//                                     /*in*/  m_metrics->copy_pt(f),
-//                                     /*in*/  m_metrics->zero_grad(),        // <----double check!!!
-//                                     /*in*/  m_metrics->flx_pt_Jinv(flx_pt),
-//                                     /*out*/ m_neighbor_flx_pt_vars[flx_pt],
-//                                     /*out*/ m_neighbor_flx_pt_gradvars[flx_pt],
-//                                     /*out*/ m_neighbor_flx_pt_gradvars_grad[flx_pt] );
-
-//              m_neighbor_flx_pt_gradvars_grad[flx_pt] = m_flx_pt_gradvars_grad[flx_pt];
+              // use inside gradient
+              neighbour_flx_pt_grad[flx_pt] = flx_pt_grad[flx_pt];
             }
-            else // Gradient is computed in neighbor cell
+            else // Gradient is computed in neighbour cell
             {
-              mesh::Connectivity::ConstRow nodes = neighbor_space[face_nb]->connectivity()[neighbor_elem_idx[face_nb]];
+              mesh::Connectivity::ConstRow nodes = neighbour_space[face_nb]->connectivity()[neighbour_elem_idx[face_nb]];
 
-              const mesh::ReconstructPoint& interpolation = metrics->interpolation_from_sol_pts_to_flx_pt(neighbor_flx_pt);
-              neighbor_flx_pt_vars[flx_pt].setZero();
+              const mesh::ReconstructPoint& interpolation = metrics->interpolation_from_sol_pts_to_flx_pt(neighbour_flx_pt);
+              neighbour_flx_pt_vars[flx_pt].setZero();
               boost_foreach( Uint n, interpolation.used_points() )
               {
                 const Real C = interpolation.coeff(n);
                 for (Uint v=0; v<nb_vars; ++v)
                 {
-                  neighbor_flx_pt_vars[flx_pt][v] += C * m_field->array()[nodes[n]][v];
+                  neighbour_flx_pt_vars[flx_pt][v] += C * m_field->array()[nodes[n]][v];
                 }
               }
 
-
-
-              const std::vector<mesh::ReconstructPoint>& gradient = metrics->gradient_from_sol_pts_to_flx_pt(neighbor_flx_pt);
-              neighbor_flx_pt_grad[flx_pt].setZero();
+              const std::vector<mesh::ReconstructPoint>& gradient = metrics->gradient_from_sol_pts_to_flx_pt(neighbour_flx_pt);
+              neighbour_flx_pt_grad[flx_pt].setZero();
               for (Uint d=0; d<NDIM; ++d)
               {
                 boost_foreach( Uint n, gradient[d].used_points() )
@@ -342,114 +291,118 @@ void ComputeFieldGradientBR2::compute_gradient()
                   const Real C = gradient[d].coeff(n);
                   for (Uint v=0; v<nb_vars; ++v)
                   {
-                    neighbor_flx_pt_grad[flx_pt](d,v) += C * m_field->array()[nodes[n]][v];
+                    neighbour_flx_pt_grad[flx_pt](d,v) += C * m_field->array()[nodes[n]][v];
                   }
                 }
               }
-//              neighbor_flx_pt_grad[flx_pt] = metrics->flx_pt_Jinv(flx_pt)*neighbor_flx_pt_grad[flx_pt];
-//              CFinfo << neighbor_flx_pt_grad[flx_pt].transpose() << CFendl;
-
-
-//              m_term->get_variables( /*in*/  *m_neighbor_space[face_nb], m_neighbor_elem_idx[face_nb],
-//                                     /*in*/  m_metrics->flx_pt_coords(flx_pt),
-//                                     /*in*/  m_metrics->interpolation_from_sol_pts_to_flx_pt(neighbor_flx_pt),
-//                                     /*in*/  m_metrics->gradient_from_sol_pts_to_flx_pt(neighbor_flx_pt),
-//                                     /*in*/  m_metrics->flx_pt_Jinv(flx_pt),
-//                                     /*out*/ m_neighbor_flx_pt_vars[flx_pt],
-//                                     /*out*/ m_neighbor_flx_pt_gradvars[flx_pt],
-//                                     /*out*/ m_neighbor_flx_pt_gradvars_grad[flx_pt] );
+              neighbour_flx_pt_grad[flx_pt] = neighbour_element_metrics->flx_pt_Jinv(neighbour_flx_pt) * neighbour_flx_pt_grad[flx_pt];
             }
-
-            avg_flx_pt_vars[flx_pt] += neighbor_flx_pt_vars[flx_pt];
+            avg_flx_pt_vars[flx_pt] += neighbour_flx_pt_vars[flx_pt];
             avg_flx_pt_vars[flx_pt] *= 0.5;
 
           } // end for (f) face_pts
 
 
-          // Compute Left lifting operator ( Lambda_L )
-          boost_foreach(RealVector& j, jump)
+          if (m_alpha)
           {
-            j.setZero();
-          }
-          boost_foreach(RealVector& j, neighbor_jump)
-          {
-            j.setZero();
-          }
-
-
-          for (Uint f=0; f<nb_face_pts; ++f)
-          {
-            Uint flx_pt = face_pts[face_nb][f];
-            jump[flx_pt] = neighbor_flx_pt_vars[flx_pt] - flx_pt_vars[flx_pt];
-          }
-
-          for (Uint f=0; f<nb_face_pts; ++f)
-          {
-            Uint flx_pt = face_pts[face_nb][f];
-            LambdaL[flx_pt].setZero();
-            for (Uint d=0; d<NDIM; ++d)
+            // Compute Left lifting operator ( Lambda_L )
+            boost_foreach(RealVector& j, jump)
             {
-              boost_foreach( Uint n, metrics->derivation_from_flx_pts_to_flx_pt(flx_pt,d).used_points())
-              {
-                const Real C = metrics->derivation_from_flx_pts_to_flx_pt(flx_pt,d).coeff(n);
-                for (Uint v=0; v<nb_vars; ++v)
-                  LambdaL[flx_pt](d,v) += jump[n][v] * C;
-              }
+              j.setZero();
             }
-//            LambdaL[flx_pt] = metrics->flx_pt_Jinv(flx_pt) * LambdaL[flx_pt];
-          }
+            boost_foreach(RealVector& j, neighbour_jump)
+            {
+              j.setZero();
+            }
 
-          // Compute Right lifting operator ( Lambda_R )
-          if ( connected->is_bdry_face()[face_nb] )
-          {
+
             for (Uint f=0; f<nb_face_pts; ++f)
             {
               Uint flx_pt = face_pts[face_nb][f];
-              LambdaR[flx_pt] = LambdaL[flx_pt];
+              jump[flx_pt] = neighbour_flx_pt_vars[flx_pt] - flx_pt_vars[flx_pt];
             }
-          }
-          else
-          {
+
             for (Uint f=0; f<nb_face_pts; ++f)
             {
               Uint flx_pt = face_pts[face_nb][f];
-              Uint neighbor_flx_pt = neighbor_face_pts[face_nb][f];
-              neighbor_jump[neighbor_flx_pt] = - jump[flx_pt];
-            }
-            for (Uint f=0; f<nb_face_pts; ++f)
-            {
-              Uint flx_pt = face_pts[face_nb][f];
-              Uint neighbor_flx_pt = neighbor_face_pts[face_nb][f];
-              LambdaR[flx_pt].setZero();
+              LambdaL[flx_pt].setZero();
               for (Uint d=0; d<NDIM; ++d)
               {
-                boost_foreach( Uint n, metrics->derivation_from_flx_pts_to_flx_pt(neighbor_flx_pt,d).used_points() )
+                boost_foreach( Uint n, metrics->derivation_from_flx_pts_to_flx_pt(flx_pt,d).used_points())
                 {
-                  const Real C = metrics->derivation_from_flx_pts_to_flx_pt(neighbor_flx_pt,d).coeff(n);
+                  const Real C = metrics->derivation_from_flx_pts_to_flx_pt(flx_pt,d).coeff(n);
                   for (Uint v=0; v<nb_vars; ++v)
-                    LambdaR[flx_pt](d,v) += neighbor_jump[n][v] * C;
+                    LambdaL[flx_pt](d,v) += jump[n][v] * C;
                 }
               }
-//              LambdaR[flx_pt] = metrics->flx_pt_Jinv(flx_pt) * LambdaR[flx_pt];
+              LambdaL[flx_pt] = element_metrics->flx_pt_Jinv(flx_pt) * LambdaL[flx_pt];
             }
+
+            // Compute Right lifting operator ( Lambda_R )
+            if ( connected->is_bdry_face()[face_nb] )
+            {
+              for (Uint f=0; f<nb_face_pts; ++f)
+              {
+                Uint flx_pt = face_pts[face_nb][f];
+                LambdaR[flx_pt] = LambdaL[flx_pt];
+              }
+            }
+            else
+            {
+              for (Uint f=0; f<nb_face_pts; ++f)
+              {
+                Uint flx_pt = face_pts[face_nb][f];
+                Uint neighbour_flx_pt = neighbour_face_pts[face_nb][f];
+                neighbour_jump[neighbour_flx_pt] = jump[flx_pt];
+                if (element_metrics->flx_pt_coords(flx_pt) != neighbour_element_metrics->flx_pt_coords(neighbour_flx_pt))
+                {
+                  std::cout << "mismatch: " << element_metrics->flx_pt_coords(flx_pt).transpose() << "    !=    " << neighbour_element_metrics->flx_pt_coords(neighbour_flx_pt).transpose() << std::endl;
+                }
+                else
+                {
+                  //std::cout << "match" << std::endl;
+                }
+              }
+              for (Uint f=0; f<nb_face_pts; ++f)
+              {
+                Uint flx_pt = face_pts[face_nb][f];
+                Uint neighbour_flx_pt = neighbour_face_pts[face_nb][f];
+                LambdaR[flx_pt].setZero();
+                for (Uint d=0; d<NDIM; ++d)
+                {
+                  boost_foreach( Uint n, metrics->derivation_from_flx_pts_to_flx_pt(neighbour_flx_pt,d).used_points() )
+                  {
+                    const Real C = metrics->derivation_from_flx_pts_to_flx_pt(neighbour_flx_pt,d).coeff(n);
+                    for (Uint v=0; v<nb_vars; ++v)
+                      LambdaR[flx_pt](d,v) += neighbour_jump[n][v] * C;
+                  }
+                }
+                LambdaR[flx_pt] = neighbour_element_metrics->flx_pt_Jinv(neighbour_flx_pt) * LambdaR[flx_pt];
+              }
+            }
+            // Now LambdaL and LambdaR are computed
           }
-          // Now LambdaL and LambdaR are computed
 
           // Average now
-          for (Uint f=0; f<nb_face_pts; ++f) // loop over face flux points
+          if (activate_BR2)
           {
-            Uint flx_pt = face_pts[face_nb][f];
-            avg_flx_pt_grad[flx_pt] += neighbor_flx_pt_grad[flx_pt];
-            avg_flx_pt_grad[flx_pt] += m_alpha*LambdaL[flx_pt];
-            avg_flx_pt_grad[flx_pt] += m_alpha*LambdaR[flx_pt];
-            avg_flx_pt_grad[flx_pt] *= 0.5;
+            for (Uint f=0; f<nb_face_pts; ++f) // loop over face flux points
+            {
+              Uint flx_pt = face_pts[face_nb][f];
+              avg_flx_pt_grad[flx_pt] += neighbour_flx_pt_grad[flx_pt];
+              avg_flx_pt_grad[flx_pt] += m_alpha*LambdaL[flx_pt];
+              avg_flx_pt_grad[flx_pt] += m_alpha*LambdaR[flx_pt];
+              avg_flx_pt_grad[flx_pt] *= 0.5;
+              avg_flx_pt_grad[flx_pt] = element_metrics->flx_pt_J(flx_pt) * avg_flx_pt_grad[flx_pt];
+            }
           }
         } // end for (face_nb)
 
-        std::vector<Eigen::Matrix<Real,NDIM,Eigen::Dynamic> > grad_pt_grad(nb_grad_pts, Eigen::Matrix<Real,NDIM,Eigen::Dynamic>(NDIM,nb_vars));
         for (Uint grad_pt=0; grad_pt<nb_grad_pts; ++grad_pt)
         {
           grad_pt_grad[grad_pt].setZero();
+          RealMatrix grad_pt_J = cells->element_type().jacobian(grad_sf->local_coordinates().row(grad_pt), element_metrics->cell_coords());
+          RealMatrix grad_pt_Jinv = grad_pt_J.inverse();
           for (Uint d=0; d<NDIM; ++d)
           {
             boost_foreach( Uint flx_pt, line_interpolation_from_flx_pts_to_grad_pt[grad_pt][d].used_points() )
@@ -459,7 +412,7 @@ void ComputeFieldGradientBR2::compute_gradient()
                 grad_pt_grad[grad_pt](d,v) += avg_flx_pt_grad[flx_pt](d,v) * C;
             }
           }
-          grad_pt_grad[grad_pt] = cells->element_type().jacobian(grad_sf->local_coordinates().row(grad_pt), metrics->cell_coords()).inverse() * grad_pt_grad[grad_pt];
+          grad_pt_grad[grad_pt] = grad_pt_Jinv * grad_pt_grad[grad_pt];
         }
 
         mesh::Connectivity::ConstRow grad_nodes = grad_space->connectivity()[e];

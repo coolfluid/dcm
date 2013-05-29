@@ -38,8 +38,8 @@ NavierStokes2D::NavierStokes2D ( const std::string& name  ) :
   options().add("R",287.05)
       .mark_basic()
       .description("Gas constant");
-  options().add("k",2.601e-2)
-      .description("Heat conduction")
+  options().add("kappa",2.601e-2)
+      .description("Thermal conduction")
       .mark_basic();
   options().add("mu",1.806e-5)
       .description("Dynamic viscosity")

@@ -39,8 +39,8 @@ Terms1D::Terms1D( const std::string& name ) :
       .description("Riemann solver")
       .attach_trigger( boost::bind( &Terms1D::config_riemann_solver, this) );
   config_riemann_solver();
-  options().add("k",m_k).link_to(&m_k)
-      .description("Heat conduction")
+  options().add("kappa",m_kappa).link_to(&m_kappa)
+      .description("Thermal conduction")
       .mark_basic();
   options().add("mu",m_mu).link_to(&m_mu)
       .description("Dynamic viscosity")
@@ -52,7 +52,9 @@ void Terms1D::get_variables( const mesh::Space& space,
                              const ColVector_NDIM& coords,
                              const mesh::ReconstructPoint& interpolation,
                              const std::vector<mesh::ReconstructPoint>& gradient,
+                             const Matrix_NDIMxNDIM& jacobian,
                              const Matrix_NDIMxNDIM& jacobian_inverse,
+                             const Real& jacobian_determinant,
                              RowVector_NVAR& vars,
                              RowVector_NGRAD& gradvars,
                              Matrix_NDIMxNGRAD& gradvars_grad )
@@ -109,7 +111,7 @@ void Terms1D::set_phys_data_constants( DATA& phys_data )
   phys_data.gamma=m_gamma;
   phys_data.R=m_R;
   phys_data.mu = m_mu;
-  phys_data.k = m_k;
+  phys_data.kappa = m_kappa;
   phys_data.Cp = m_gamma*m_R/(m_gamma-1.);
 }
 

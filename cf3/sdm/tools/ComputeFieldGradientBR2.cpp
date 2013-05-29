@@ -63,12 +63,14 @@ ComputeFieldGradientBR2::ComputeFieldGradientBR2( const std::string& name )
       .description("Output: gradient of option \"field\"")
       .mark_basic();
 
-  options().add("normal",m_normal).link_to(&m_normal);
+//  options().add("normal",m_normal).link_to(&m_normal);
 
 
   options().add("alpha",-1.)
       .description("Damping coefficient in BR2 scheme for face-gradient computation\n"
                    "If negative, alpha = 1/(P+1) is used");
+
+  options().add("BR2",true);
 
 }
 
