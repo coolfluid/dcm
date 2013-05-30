@@ -72,7 +72,7 @@ print "norm = ",compute_norm.properties()['norm']
 
 fields = [
   lineuler.fields.solution.uri(),
-  lineuler.fields.ws.uri(),
+  lineuler.fields.wave_speed.uri(),
   lineuler.fields.rhs.uri(),
   lineuler.fields.exact_solution.uri(),
   lineuler.fields.difference.uri()
