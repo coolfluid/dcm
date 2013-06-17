@@ -86,8 +86,43 @@ public: // types
         }
       }
     }
-    gradvars_grad = jacobian_inverse*gradvars_grad;
+    gradvars_grad = jacobian_inverse * gradvars_grad;
   }
+
+  /// @brief Compute bdry variables and gradients in a given element point
+  void get_bdry_variables( const mesh::Space& space,
+                           const Uint elem_idx,
+                           const typename physics::MatrixTypes<NB_DIM,NB_DIM,NB_DIM,NB_DIM>::ColVector_NDIM& coords,
+                           const mesh::ReconstructPoint& interpolation,
+                           const std::vector<mesh::ReconstructPoint>& gradient,
+                           const typename physics::MatrixTypes<NB_DIM,NB_DIM,NB_DIM,NB_DIM>::Matrix_NDIMxNDIM& jacobian,
+                           const typename physics::MatrixTypes<NB_DIM,NB_DIM,NB_DIM,NB_DIM>::Matrix_NDIMxNDIM& jacobian_inverse,
+                           const Real& jacobian_determinant,
+                           typename physics::MatrixTypes<NB_DIM,NB_DIM,NB_DIM,NB_DIM>::RowVector_NVAR& vars,
+                           typename physics::MatrixTypes<NB_DIM,NB_DIM,NB_DIM,NB_DIM>::RowVector_NGRAD& gradvars,
+                           typename physics::MatrixTypes<NB_DIM,NB_DIM,NB_DIM,NB_DIM>::Matrix_NDIMxNGRAD& gradvars_grad )
+  {
+    // Typically get the solution here
+    RealMatrix cell_coords = space.get_coordinates(elem_idx);
+    vars.setZero();
+    boost_foreach( Uint pt, interpolation.used_points() )
+    {
+      for (Uint v=0; v<NB_DIM; ++v)
+      {
+        vars[v] += interpolation.coeff(pt) * cell_coords(pt,v);
+      }
+    }
+    vars = coords;
+
+    // because NGRAD = NVAR in this case, and to make a point
+    gradvars = vars;
+    gradvars_grad.setZero();
+    for (Uint d=0; d<NB_DIM; ++d)
+    {
+      gradvars_grad(d,d)=1.;
+    }
+  }
+
   
   /// @brief Set constants in the data
   void set_phys_data_constants( DATA& phys_data ) { }

@@ -42,8 +42,6 @@ public: // types
 public: // Variable and PhysData computation
     
   /// @brief Compute variables and gradients in a given element point
-  ///
-  /// The interpolation and gradient reconstructions, as well as
   void get_variables( const mesh::Space& space,
                       const Uint elem_idx,
                       const ColVector_NDIM& coords,
@@ -55,6 +53,19 @@ public: // Variable and PhysData computation
                       RowVector_NVAR& vars,
                       RowVector_NGRAD& gradvars,
                       Matrix_NDIMxNGRAD& gradvars_grad );
+
+  void get_bdry_variables( const mesh::Space& space,
+                           const Uint elem_idx,
+                           const ColVector_NDIM& coords,
+                           const mesh::ReconstructPoint& interpolation,
+                           const std::vector<mesh::ReconstructPoint>& gradient,
+                           const Matrix_NDIMxNDIM& jacobian,
+                           const Matrix_NDIMxNDIM& jacobian_inverse,
+                           const Real& jacobian_determinant,
+                           RowVector_NVAR& vars,
+                           RowVector_NGRAD& gradvars,
+                           Matrix_NDIMxNGRAD& gradvars_grad );
+
   
   /// @brief Set constants in the data
   void set_phys_data_constants( DATA& phys_data );

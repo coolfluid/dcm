@@ -106,6 +106,7 @@ BOOST_AUTO_TEST_CASE( compute_1d )
   typedef sdm::test::Term<dim>  TERM;
   shared_ptr< TERM >         term          = allocate_component< TERM         >("term");
   BOOST_CHECK_NO_THROW(term->options().set("fields",solution_space));
+  BOOST_CHECK_NO_THROW(term->options().set("bdry_fields",solution_space));
 
   // Create Numerics to solve the physics
   shared_ptr<ComputeRHS>  compute_rhs   = allocate_component<ComputeRHS>("compute_rhs");
@@ -113,6 +114,7 @@ BOOST_AUTO_TEST_CASE( compute_1d )
   typedef CombinedTermComputer< TERM >  TERM_COMPUTER;
   Handle< solver::TermComputer > compute_term  = compute_rhs->create_component< TERM_COMPUTER >("term_computer")->handle<solver::TermComputer>();
   BOOST_CHECK_NO_THROW(compute_term->options().set("term",term->handle()));
+  compute_term->options().set("alpha",0.);
 
   // Solve
   mesh::Field& rhs         = solution_space->create_field("rhs",dim);
@@ -155,6 +157,7 @@ BOOST_AUTO_TEST_CASE( compute_2d )
   typedef sdm::test::Term<dim>  TERM;
   shared_ptr< TERM >         term          = allocate_component< TERM         >("term");
   BOOST_CHECK_NO_THROW(term->options().set("fields",solution_space));
+  BOOST_CHECK_NO_THROW(term->options().set("bdry_fields",solution_space));
 
   // Create Numerics to solve the physics
   shared_ptr<ComputeRHS>  compute_rhs   = allocate_component<ComputeRHS>("compute_rhs");
@@ -208,6 +211,7 @@ BOOST_AUTO_TEST_CASE( compute_3d )
   typedef sdm::test::Term<dim>  TERM;
   shared_ptr< TERM >         term          = allocate_component< TERM         >("term");
   BOOST_CHECK_NO_THROW(term->options().set("fields",solution_space));
+  BOOST_CHECK_NO_THROW(term->options().set("bdry_fields",solution_space));
 
   // Create Numerics to solve the physics
   shared_ptr<ComputeRHS>  compute_rhs   = allocate_component<ComputeRHS>("compute_rhs");

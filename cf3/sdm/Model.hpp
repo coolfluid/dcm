@@ -77,6 +77,8 @@ public: // functions
 
   Handle<mesh::Dictionary> create_space(const std::string& name, const std::string& shape_function, const std::vector<Handle<common::Component> > &regions);
 
+  Handle<mesh::Dictionary> create_bdry_space(const std::string& name, const std::string& shape_function, const std::vector<Handle<common::Component> > &regions);
+
 private: // functions
 
   void config_solution();

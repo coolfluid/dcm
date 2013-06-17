@@ -61,6 +61,7 @@ public: // functions
 private:
 
   Handle< mesh::Dictionary >  m_dict;
+  Handle< mesh::Dictionary >  m_bdry_dict;
   Handle< TERM >              m_term;
   Handle< sdm::core::CellConnectivity >  m_connected;
   Handle< mesh::Cells const > m_cells;
@@ -148,6 +149,9 @@ bool CombinedTermComputer<TERM>::loop_cells(const Handle<mesh::Entities const>& 
 
   m_dict = m_term->fields();
   cf3_assert(m_dict);
+
+  m_bdry_dict = m_term->bdry_fields();
+  cf3_assert(m_bdry_dict);
 
   m_cells = cells->handle<mesh::Cells>();
   cf3_assert(m_term);
@@ -241,12 +245,10 @@ void CombinedTermComputer<TERM>::compute_term(const Uint elem_idx, std::vector<R
   //                     COMPUTE CELL METRICS AND CONNECTIVITY
   // ---------------------------------------------------------------------------
   m_connected->compute_cell(*m_cells,elem_idx);
-//  m_metrics->compute_element(elem_idx);
   m_element_metrics = m_metrics->element(elem_idx);
 
   for (Uint face_nb=0; face_nb<m_nb_faces; ++face_nb)
   {
-    m_neighbor_space[face_nb] = &m_dict->space(*m_connected->neighbor_cells()[face_nb].comp);
     m_neighbor_elem_idx[face_nb] = m_connected->neighbor_cells()[face_nb].idx;
 
     const std::vector<Uint>& face_flx_pts  = m_sf->face_flx_pts(
@@ -256,6 +258,7 @@ void CombinedTermComputer<TERM>::compute_term(const Uint elem_idx, std::vector<R
 
     if ( m_connected->is_bdry_face()[face_nb] )
     {
+      m_neighbor_space[face_nb] = &m_bdry_dict->space(*m_connected->neighbor_cells()[face_nb].comp);
       for (Uint f=0; f<m_nb_face_pts; ++f)
       {
         m_face_pts[face_nb][f]          = face_flx_pts[f];
@@ -264,6 +267,7 @@ void CombinedTermComputer<TERM>::compute_term(const Uint elem_idx, std::vector<R
     }
     else
     {
+      m_neighbor_space[face_nb] = &m_dict->space(*m_connected->neighbor_cells()[face_nb].comp);
       m_neighbor_element_metrics[face_nb] = m_metrics->element( m_neighbor_elem_idx[face_nb] );
       const std::vector<Uint>& neighbor_face_flx_pts = m_sf->face_flx_pts(
           m_connected->neighbour_face_nb()[face_nb],
@@ -301,6 +305,7 @@ void CombinedTermComputer<TERM>::compute_term(const Uint elem_idx, std::vector<R
                              /*out*/ m_flx_pt_vars[flx_pt],
                              /*out*/ m_flx_pt_gradvars[flx_pt],
                              /*out*/ m_flx_pt_gradvars_grad[flx_pt] );
+
       m_avg_flx_pt_vars[flx_pt]          =  m_flx_pt_vars[flx_pt];
       m_avg_flx_pt_gradvars[flx_pt]      =  m_flx_pt_gradvars[flx_pt];
       m_avg_flx_pt_gradvars_grad[flx_pt] =  m_flx_pt_gradvars_grad[flx_pt];
@@ -316,23 +321,23 @@ void CombinedTermComputer<TERM>::compute_term(const Uint elem_idx, std::vector<R
         Uint flx_pt = m_face_pts[face_nb][f];
         Uint neighbor_flx_pt = m_neighbor_face_pts[face_nb][f];
 
-        if ( m_connected->is_bdry_face()[face_nb] )  // Gradient is copied from inside
+        if ( m_connected->is_bdry_face()[face_nb] )
         {
-          m_term->get_variables( /*in*/  *m_neighbor_space[face_nb], m_neighbor_elem_idx[face_nb],
-                                 /*in*/  m_element_metrics->flx_pt_coords(flx_pt),
-                                 /*in*/  m_metrics->copy_pt(f),
-                                 /*in*/  m_metrics->zero_grad(), // this plays no role because of next command
-                                 /*in*/  m_element_metrics->flx_pt_J(flx_pt),
-                                 /*in*/  m_element_metrics->flx_pt_Jinv(flx_pt),
-                                 /*in*/  m_element_metrics->flx_pt_Jdet(flx_pt),
-                                 /*out*/ m_neighbor_flx_pt_vars[flx_pt],
-                                 /*out*/ m_neighbor_flx_pt_gradvars[flx_pt],
-                                 /*out*/ m_neighbor_flx_pt_gradvars_grad[flx_pt] );
-          // Copy gradient from inside
-          m_neighbor_flx_pt_gradvars_grad[flx_pt] = m_flx_pt_gradvars_grad[flx_pt];
+          // Boundary values and Gradients are retrieved from fields, set by a BC
+          m_term->get_bdry_variables( /*in*/  *m_neighbor_space[face_nb], m_neighbor_elem_idx[face_nb],
+                                      /*in*/  m_element_metrics->flx_pt_coords(flx_pt),
+                                      /*in*/  m_metrics->copy_pt(f),
+                                      /*in*/  m_metrics->copy_grad(f),
+                                      /*in*/  m_element_metrics->flx_pt_J(flx_pt),
+                                      /*in*/  m_element_metrics->flx_pt_Jinv(flx_pt),
+                                      /*in*/  m_element_metrics->flx_pt_Jdet(flx_pt),
+                                      /*out*/ m_neighbor_flx_pt_vars[flx_pt],
+                                      /*out*/ m_neighbor_flx_pt_gradvars[flx_pt],
+                                      /*out*/ m_neighbor_flx_pt_gradvars_grad[flx_pt] );
         }
-        else // Gradient is computed in neighbor cell
+        else
         {
+          // Gradient is computed in neighbor cell
           m_term->get_variables( /*in*/  *m_neighbor_space[face_nb], m_neighbor_elem_idx[face_nb],
                                  /*in*/  m_neighbor_element_metrics[face_nb]->flx_pt_coords(neighbor_flx_pt),
                                  /*in*/  m_metrics->interpolation_from_sol_pts_to_flx_pt(neighbor_flx_pt),
@@ -564,9 +569,10 @@ void CombinedTermComputer<TERM>::compute_term(const Uint elem_idx, std::vector<R
                                      /*out*/ m_phys_data );
 
           m_term->compute_diffusive_flux( /*in*/  m_phys_data,
-                                          /*in*/  m_element_metrics->flx_pt_unit_normal(flx_pt),
+                                          /*in*/  m_element_metrics->flx_pt_unit_normal(flx_pt)*m_sf->flx_pt_sign(flx_pt),
                                           /*out*/ m_diffusive_flux,
                                           /*out*/ m_diffusive_wave_speed );
+          m_diffusive_flux *= m_sf->flx_pt_sign(flx_pt);
           m_flx_pt_flux[flx_pt] -= m_diffusive_flux;
         }
 
@@ -583,6 +589,7 @@ void CombinedTermComputer<TERM>::compute_term(const Uint elem_idx, std::vector<R
         // Take max of both
         m_flx_pt_wave_speed[flx_pt] = std::max(m_convective_wave_speed,m_diffusive_wave_speed);
       }
+
     } // end for face_nb
 
 
@@ -631,6 +638,15 @@ void CombinedTermComputer<TERM>::compute_term(const Uint elem_idx, std::vector<R
   // ---------------------------------------------------------------------------
   if (TERM::ENABLE_SOURCE)
   {
+    if (TERM::NGRAD)
+    {
+      // Transform gradient in flux points to KSI,ETA,ZTA coordinates
+      for (Uint flx_pt=0; flx_pt<m_nb_flx_pts; ++flx_pt)
+      {
+        m_avg_flx_pt_gradvars_grad[flx_pt] = m_element_metrics->flx_pt_J(flx_pt) * m_avg_flx_pt_gradvars_grad[flx_pt];
+      }
+    }
+
     for (Uint sol_pt=0; sol_pt<m_nb_sol_pts; ++sol_pt)
     {
       if (TERM::NGRAD)
@@ -651,11 +667,13 @@ void CombinedTermComputer<TERM>::compute_term(const Uint elem_idx, std::vector<R
             }
             for (Uint v=0; v<NGRAD; ++v)
             {
-              m_sol_pt_gradvars[sol_pt][v] += m_avg_flx_pt_gradvars[flx_pt][v] * C_avg;
-              m_sol_pt_gradvars_grad[sol_pt](d,v) += m_avg_flx_pt_gradvars_grad[flx_pt](d,v) * C;
+              m_sol_pt_gradvars[sol_pt][v]        += C_avg * m_avg_flx_pt_gradvars[flx_pt][v];
+              m_sol_pt_gradvars_grad[sol_pt](d,v) += C     * m_avg_flx_pt_gradvars_grad[flx_pt](d,v);
             }
           }
         }
+        // Transform interpolated gradient in solution points to X,Y,Z coordinates
+        m_sol_pt_gradvars_grad[sol_pt] = m_element_metrics->sol_pt_Jinv(sol_pt) * m_sol_pt_gradvars_grad[sol_pt];
       }
       m_term->compute_phys_data( /*in*/  m_element_metrics->sol_pt_coords(sol_pt),
                                  /*in*/  m_sol_pt_vars[sol_pt],

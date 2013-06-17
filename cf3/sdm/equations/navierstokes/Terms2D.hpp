@@ -58,6 +58,18 @@ public: // Variable and PhysData computation
                       RowVector_NGRAD& gradvars,
                       Matrix_NDIMxNGRAD& gradvars_grad );
   
+  void get_bdry_variables( const mesh::Space& space,
+                           const Uint elem_idx,
+                           const ColVector_NDIM& coords,
+                           const mesh::ReconstructPoint& interpolation,
+                           const std::vector<mesh::ReconstructPoint>& gradient,
+                           const Matrix_NDIMxNDIM& jacobian,
+                           const Matrix_NDIMxNDIM& jacobian_inverse,
+                           const Real& jacobian_determinant,
+                           RowVector_NVAR& vars,
+                           RowVector_NGRAD& gradvars,
+                           Matrix_NDIMxNGRAD& gradvars_grad );
+
   /// @brief Set constants in the data
   void set_phys_data_constants( DATA& phys_data );
 
@@ -102,6 +114,21 @@ private: // configuration
   Real m_R;
   Real m_kappa;
   Real m_mu;
+
+  Real _rho;
+  Real _u;
+  Real _v;
+  Real _E;
+  Real _U2;
+  Real _p;
+  Real _T;
+  ColVector_NDIM _grad_rho;
+  ColVector_NDIM _grad_rhou;
+  ColVector_NDIM _grad_rhov;
+  ColVector_NDIM _grad_rhoE;
+  ColVector_NDIM _grad_u;
+  ColVector_NDIM _grad_v;
+  ColVector_NDIM _grad_T;
 };
 
 ////////////////////////////////////////////////////////////////////////////////

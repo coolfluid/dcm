@@ -29,6 +29,7 @@
 #include "cf3/mesh/DiscontinuousDictionary.hpp"
 #include "cf3/mesh/Domain.hpp"
 #include "cf3/mesh/Entities.hpp"
+#include "cf3/mesh/Faces.hpp"
 #include "cf3/mesh/Field.hpp"
 #include "cf3/mesh/Mesh.hpp"
 #include "cf3/mesh/Space.hpp"
@@ -182,6 +183,48 @@ void Model::build_faces(Mesh& mesh)
 
 ////////////////////////////////////////////////////////////////////////////////
 
+Handle<mesh::Dictionary> Model::create_bdry_space(const std::string& name, const std::string& shape_function, const std::vector<Handle<Component> >& regions)
+{
+  if (find_components<Mesh>(*m_domain).size() == 0)
+    throw SetupError(FromHere(), "Could not create solution_space because no meshes were found in "+m_domain->uri().string());
+
+  /// @todo Support dictionary for more meshes.
+  ///       This involves changing the element-finder configuration for interpolation, as it is searched for a parent of the dictionary,
+  ///       to be a mesh always.
+  if (find_components<Mesh>(*m_domain).size() > 1)
+    throw NotImplemented(FromHere(),"Multiple mesh not supported yet");
+  Handle<Mesh> mesh = find_component_ptr<Mesh>(*m_domain);
+  Handle<Dictionary> dict = mesh->create_component<DiscontinuousDictionary>(name);
+
+  std::string space_lib_name = shape_function;
+  CFinfo << "Creating Disontinuous boundary space " << dict->uri() << " ("<<space_lib_name<<") for entities" << CFendl;
+  boost_foreach(const Handle<Component>& comp, regions)
+  {
+    boost_foreach(const Entities& entities, find_components_recursively<Faces>( *comp ) )
+    {
+      CFinfo << "    -  " <<  entities.uri() << CFendl;
+    }
+  }
+
+  boost_foreach(const Handle<Component>& comp, regions)
+  {
+    boost_foreach(Faces& entities, find_components_recursively<Faces>( *comp ) )
+    {
+      entities.create_space(space_lib_name+"."+entities.element_type().shape_name(),*dict);
+    }
+  }
+  dict->build();
+
+  boost_foreach(Mesh& mesh, find_components<Mesh>(*m_domain) )
+  {
+    mesh.update_structures();
+  }
+
+  return dict;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 void Model::signal_add_pde( common::SignalArgs& args)
 {
   common::XML::SignalOptions opts(args);
@@ -305,11 +348,14 @@ Handle<solver::PDE> Model::add_pde(const std::string& name, const std::string& t
 
 Handle<solver::PDE> Model::add_pde(const std::string& name, const std::string& type, const std::string& shape_function, const std::vector<Handle<common::Component> > &regions)
 {
-  Handle<Dictionary> solution_space = create_space(name,shape_function,regions);
+  Handle<Dictionary> solution_space      = create_space     (name,shape_function,regions);
+  Handle<Dictionary> bdry_solution_space = create_bdry_space(name+"_bdry",shape_function,regions);
 
   Handle<solver::PDE> pde = create_component(name,type)->handle<solver::PDE>();
   pde->mark_basic();
   pde->options().set("fields",solution_space);
+  pde->options().set("bdry_fields",bdry_solution_space);
+  // SET bdry_solution_space
   return pde;
 }
 

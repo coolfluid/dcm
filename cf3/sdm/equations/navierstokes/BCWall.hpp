@@ -54,11 +54,15 @@ public:
   static std::string type_name() { return "BCWall2D"; }
   
    virtual void compute_boundary_solution( const RowVector_NEQS& inner_solution,
-                                          const ColVector_NDIM& coords,
-                                          const ColVector_NDIM& face_normal, 
-                                          RowVector_NEQS& boundary_solution );
+                                           const Matrix_NDIMxNEQS& inner_solution_gradient,
+                                           const ColVector_NDIM& coords,
+                                           const ColVector_NDIM& face_normal,
+                                           RowVector_NEQS& boundary_solution,
+                                           Matrix_NDIMxNEQS& boundary_solution_gradient );
 private:
   Real m_wall_velocity;
+  Real m_gamma;
+  Real m_R;
 };
 
 ////////////////////////////////////////////////////////////////////////////////

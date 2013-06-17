@@ -45,7 +45,8 @@ public: // types
 
   typedef typename physics::MatrixTypes<NDIM,NEQS>::ColVector_NDIM ColVector_NDIM;
   typedef typename physics::MatrixTypes<NDIM,NEQS>::RowVector_NEQS RowVector_NEQS;
-  typedef typename physics::MatrixTypes<NDIM,NEQS>::Matrix_NDIMxNDIM Matrix_NDIMxNDIM;
+  typedef typename physics::MatrixTypes<NDIM,NEQS>::Matrix_NDIMxNEQS Matrix_NDIMxNEQS;
+  typedef typename physics::MatrixTypes<NDIM,NDIM>::Matrix_NDIMxNDIM Matrix_NDIMxNDIM;
 
 public: // functions
   /// Contructor
@@ -64,25 +65,35 @@ public: // functions
 
   virtual void compute_element(const Uint elem_idx);
 
-  virtual void compute_boundary_solution(const Uint cell_face_flx_pt, RowVector_NEQS& boundary_solution);
+  virtual void compute_boundary_solution(const Uint cell_face_flx_pt, RowVector_NEQS& boundary_solution,
+                                         Matrix_NDIMxNEQS& boundary_solution_gradient);
 
   virtual void compute_boundary_solution( const RowVector_NEQS& inner_solution, 
                                           const ColVector_NDIM& coords,
                                           const ColVector_NDIM& face_normal, 
                                           RowVector_NEQS& boundary_solution );
-  
-  virtual void set_face_solution(const Uint face_pt, RowVector_NEQS& boundary_solution);
+
+  virtual void compute_boundary_solution( const RowVector_NEQS& inner_solution,
+                                          const Matrix_NDIMxNEQS& inner_solution_gradient,
+                                          const ColVector_NDIM& coords,
+                                          const ColVector_NDIM& face_normal,
+                                          RowVector_NEQS& boundary_solution,
+                                          Matrix_NDIMxNEQS& boundary_solution_gradient );
+
+  virtual void set_face_solution(const Uint face_pt, RowVector_NEQS& boundary_solution,
+                                 Matrix_NDIMxNEQS& boundary_solution_gradient);
   
 protected:
 
-  Handle< sdm::core::FaceConnectivity >    m_connected;
-  Handle< mesh::Faces const >              m_faces;
-  Handle< mesh::Cells const >              m_cells;
-  Handle< mesh::Space const >              m_faces_space;
-  Handle< mesh::Space const >              m_cells_space;
-  Handle< sdm::core::ShapeFunction const > m_faces_sf;
-  Handle< sdm::core::ShapeFunction const > m_cells_sf;
-  Handle< sdm::core::Metrics<NDIM> >       m_cell_metrics;
+  Handle< sdm::core::FaceConnectivity >     m_connected;
+  Handle< mesh::Faces const >               m_faces;
+  Handle< mesh::Cells const >               m_cells;
+  Handle< mesh::Space const >               m_faces_space;
+  Handle< mesh::Space const >               m_cells_space;
+  Handle< sdm::core::ShapeFunction const >  m_faces_sf;
+  Handle< sdm::core::ShapeFunction const >  m_cells_sf;
+  Handle< sdm::core::Metrics<NDIM> >        m_metrics;
+  Handle< sdm::core::ElementMetrics<NDIM> > m_cell_metrics;
 
   Uint m_face_idx;
   Uint m_cell_idx;
@@ -90,7 +101,8 @@ protected:
   Uint m_nb_face_pts;
   
   std::vector<RowVector_NEQS> m_boundary_solution;
-  
+  std::vector<Matrix_NDIMxNEQS> m_boundary_solution_gradient;
+
   std::vector< std::vector<Uint> >  m_face_pts;
 };
 
@@ -132,14 +144,16 @@ bool BC<NB_DIM,NB_EQS>::loop_faces(const Handle<mesh::Entities const>& faces)
     return false;
 
   cf3_assert(m_fields);
+  cf3_assert(m_bdry_fields);
   m_faces = faces->handle<mesh::Faces>();
   cf3_assert(m_faces);
-  m_faces_space = m_fields->space(m_faces);
+  m_faces_space = m_bdry_fields->space(m_faces);
   cf3_assert(m_faces_space);
   m_faces_sf = m_faces_space->shape_function().handle<sdm::core::ShapeFunction>();
   cf3_assert(m_faces_sf);
   m_nb_face_pts = m_faces_sf->nb_sol_pts();
   m_boundary_solution.resize(m_nb_face_pts);
+  m_boundary_solution_gradient.resize(m_nb_face_pts);
   // Create or find cellconnectivity
   if  ( Handle<Component const> found = m_faces_space->get_child("face_connectivity") )
     m_connected = const_cast<Component*>(found.get())
@@ -171,15 +185,15 @@ void BC<NB_DIM,NB_EQS>::compute_element( const Uint face_idx )
   
   if  ( Handle<Component const> found = m_cells_space->get_child("metrics") )
   {
-    m_cell_metrics = const_cast<Component*>(found.get())->handle< sdm::core::Metrics<NDIM> >();
+    m_metrics = const_cast<Component*>(found.get())->handle< sdm::core::Metrics<NDIM> >();
   }
   else
   {
-    m_cell_metrics = const_cast<mesh::Space*>(m_cells_space.get())->create_component< sdm::core::Metrics<NDIM> >("metrics");
-    m_cell_metrics->setup_for_space(m_cells_space);
+    m_metrics = const_cast<mesh::Space*>(m_cells_space.get())->create_component< sdm::core::Metrics<NDIM> >("metrics");
+    m_metrics->setup_for_space(m_cells_space);
   }
-  m_cell_metrics->compute_element(m_cell_idx);
-  
+  m_cell_metrics = m_metrics->element(m_cell_idx);
+
   const std::vector<Uint>& cell_face_flx_pts = 
     m_cells_sf->face_flx_pts( m_connected->cells_face_nb()[LEFT],
                               m_connected->cells_orientation()[LEFT],
@@ -192,9 +206,9 @@ void BC<NB_DIM,NB_EQS>::compute_element( const Uint face_idx )
   {
     const Uint cell_face_flx_pt = cell_face_flx_pts[face_pt];
       
-    compute_boundary_solution(cell_face_flx_pt, m_boundary_solution[face_pt]);
+    compute_boundary_solution(cell_face_flx_pt, m_boundary_solution[face_pt], m_boundary_solution_gradient[face_pt]);
     
-    set_face_solution(face_pt,m_boundary_solution[face_pt]);
+    set_face_solution(face_pt,m_boundary_solution[face_pt], m_boundary_solution_gradient[face_pt]);
   }
 }
 
@@ -202,24 +216,41 @@ void BC<NB_DIM,NB_EQS>::compute_element( const Uint face_idx )
 
 template < Uint NB_DIM, Uint NB_EQS >
 void BC<NB_DIM,NB_EQS>::compute_boundary_solution( const Uint cell_face_flx_pt, 
-                                                   RowVector_NEQS& boundary_solution )
+                                                   RowVector_NEQS& boundary_solution,
+                                                   Matrix_NDIMxNEQS& boundary_solution_gradient )
 {
   mesh::Connectivity::ConstRow nodes = m_cells_space->connectivity()[m_cell_idx];
   
   static RowVector_NEQS inner_solution;
   inner_solution.setZero();
-  boost_foreach( const Uint sol_pt, m_cell_metrics->interpolation_from_sol_pts_to_flx_pt(cell_face_flx_pt).used_points() )
+  boost_foreach( const Uint sol_pt, m_metrics->interpolation_from_sol_pts_to_flx_pt(cell_face_flx_pt).used_points() )
   {
-    const Real C = m_cell_metrics->interpolation_from_sol_pts_to_flx_pt(cell_face_flx_pt).coeff(sol_pt);
+    const Real C = m_metrics->interpolation_from_sol_pts_to_flx_pt(cell_face_flx_pt).coeff(sol_pt);
     for (Uint eq=0; eq<NEQS; ++eq)
     {
       inner_solution[eq] += C * solution()->array()[nodes[sol_pt]][eq];
-    };
+    }
   }
-  compute_boundary_solution( inner_solution,
+  static Matrix_NDIMxNEQS inner_solution_gradient;
+  inner_solution_gradient.setZero();
+  for( Uint d=0; d<NDIM; ++d )
+  {
+    boost_foreach( const Uint sol_pt, m_metrics->gradient_from_sol_pts_to_flx_pt(cell_face_flx_pt)[d].used_points() )
+    {
+      const Real C = m_metrics->gradient_from_sol_pts_to_flx_pt(cell_face_flx_pt)[d].coeff(sol_pt);
+      for (Uint eq=0; eq<NEQS; ++eq)
+      {
+        inner_solution_gradient(d,eq) += C * solution()->array()[nodes[sol_pt]][eq];
+      }
+    }
+  }
+  inner_solution_gradient = m_cell_metrics->flx_pt_Jinv(cell_face_flx_pt) * inner_solution_gradient;
+
+
+  compute_boundary_solution( inner_solution, inner_solution_gradient,
                              m_cell_metrics->flx_pt_coords(cell_face_flx_pt),
                              m_cell_metrics->flx_pt_unit_normal(cell_face_flx_pt)*m_cells_sf->flx_pt_sign(cell_face_flx_pt), 
-                             boundary_solution );
+                             boundary_solution, boundary_solution_gradient );
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -233,17 +264,39 @@ void BC<NB_DIM,NB_EQS>::compute_boundary_solution( const RowVector_NEQS& inner_s
   boundary_solution = inner_solution;
 }
 
+
+template < Uint NB_DIM, Uint NB_EQS >
+void BC<NB_DIM,NB_EQS>::compute_boundary_solution( const RowVector_NEQS& inner_solution,
+                                                   const Matrix_NDIMxNEQS& inner_solution_gradient,
+                                                   const ColVector_NDIM& coords,
+                                                   const ColVector_NDIM& face_normal,
+                                                   RowVector_NEQS& boundary_solution,
+                                                   Matrix_NDIMxNEQS& boundary_solution_gradient )
+{
+  compute_boundary_solution(inner_solution, coords, face_normal, boundary_solution);
+  boundary_solution_gradient = inner_solution_gradient;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 template < Uint NB_DIM, Uint NB_EQS >
 void BC<NB_DIM,NB_EQS>::set_face_solution( const Uint face_pt, 
-                                           RowVector_NEQS& boundary_solution )
+                                           RowVector_NEQS& boundary_solution,
+                                           Matrix_NDIMxNEQS& boundary_solution_gradient )
 {
   const Uint pt = m_faces_space->connectivity()[m_face_idx][face_pt];
-  cf3_assert(pt<solution()->size());
-  cf3_assert(solution()->row_size() == NEQS);
+  cf3_assert(pt<bdry_solution()->size());
+  cf3_assert(pt<bdry_solution_gradient()->size());
+  cf3_assert(bdry_solution()->row_size() == NEQS);
+  cf3_assert(bdry_solution_gradient()->row_size() == NEQS*NDIM);
   for (Uint eq=0; eq<NEQS; ++eq)
-    solution()->array()[pt][eq] = boundary_solution[eq];
+  {
+    bdry_solution()->array()[pt][eq] = boundary_solution[eq];
+    for( Uint d=0; d<NDIM; ++d)
+    {
+      bdry_solution_gradient()->array()[pt][eq+d*NEQS] = boundary_solution_gradient(d,eq);
+    }
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -69,50 +69,120 @@ void Terms2D::get_variables( const mesh::Space& space,
                              RowVector_NGRAD& gradvars,
                              Matrix_NDIMxNGRAD& gradvars_grad )
 {
+  const mesh::Field& solution_field = *solution();
   mesh::Connectivity::ConstRow nodes = space.connectivity()[elem_idx];
   vars.setZero();
+
   boost_foreach( Uint n, interpolation.used_points() )
   {
-    const Real C = interpolation.coeff(n);
+    const Uint pt = nodes[n];
+    const Real L = interpolation.coeff(n);
 
     for (Uint eq=0; eq<NEQS; ++eq)
     {
-      vars[eq] += C * solution()->array()[nodes[n]][eq];
+      vars[eq] += L * solution_field[pt][eq];
     }
   }
-  const Real rho = vars[0];
-  const Real u = vars[1]/rho;
-  const Real v = vars[2]/rho;
-  const Real E = vars[3]/rho;
-  const Real p = (m_gamma-1.)*rho*(E - 0.5*(u*u+v*v));
-  const Real T = p/(rho*m_R);
 
-  gradvars[0] = u;
-  gradvars[1] = v;
-  gradvars[2] = T;
+  // Compute variables in point used for gradient
+  _rho = vars[0];
+  _u   = vars[1]/_rho;
+  _v   = vars[2]/_rho;
+  _E   = vars[3]/_rho;
+  _U2  = _u*_u+_v*_v;
+  _p   = (m_gamma-1.)*_rho*(_E - 0.5*_U2);
+  _T   = _p/(_rho*m_R);
+
+  gradvars[0] = _u;
+  gradvars[1] = _v;
+  gradvars[2] = _T;
 
   gradvars_grad.setZero();
   for (Uint d=0; d<NDIM; ++d)
   {
-    boost_foreach( Uint n, gradient[d].used_points() )
+    const mesh::ReconstructPoint& derivative = gradient[d];
+    boost_foreach( Uint n, derivative.used_points() )
     {
-      const Real C = gradient[d].coeff(n);
+      const Uint pt = nodes[n];
+      const Real D = derivative.coeff(n);
 
-      const Real rho = solution()->array()[nodes[n]][0];
-      const Real u = solution()->array()[nodes[n]][1]/rho;
-      const Real v = solution()->array()[nodes[n]][2]/rho;
-      const Real E = solution()->array()[nodes[n]][3]/rho;
-      const Real U2 = u*u+v*v;
-      const Real p = (m_gamma-1.)*rho*(E - 0.5*U2);
-      const Real T = p/(rho*m_R);
+      _rho = solution_field[pt][0];
+      _u   = solution_field[pt][1]/_rho;
+      _v   = solution_field[pt][2]/_rho;
+      _E   = solution_field[pt][3]/_rho;
+      _U2  = _u*_u+_v*_v;
+      _p   = (m_gamma-1.)*_rho*(_E - 0.5*_U2);
+      _T   = _p/(_rho*m_R);
 
-      gradvars_grad(d,0) += C * u;
-      gradvars_grad(d,1) += C * v;
-      gradvars_grad(d,2) += C * T;
+      gradvars_grad(d,0) += D * _u;
+      gradvars_grad(d,1) += D * _v;
+      gradvars_grad(d,2) += D * _T;
     }
   }
-  gradvars_grad = jacobian_inverse*gradvars_grad;
+  gradvars_grad = jacobian_inverse * gradvars_grad;
 }
+
+void Terms2D::get_bdry_variables( const mesh::Space& space,
+                                  const Uint elem_idx,
+                                  const ColVector_NDIM& coords,
+                                  const mesh::ReconstructPoint& interpolation,
+                                  const std::vector<mesh::ReconstructPoint>& gradient,
+                                  const Matrix_NDIMxNDIM& jacobian,
+                                  const Matrix_NDIMxNDIM& jacobian_inverse,
+                                  const Real& jacobian_determinant,
+                                  RowVector_NVAR& vars,
+                                  RowVector_NGRAD& gradvars,
+                                  Matrix_NDIMxNGRAD& gradvars_grad )
+{
+  const mesh::Field& bdry_solution_field = *bdry_solution();
+  const mesh::Field& bdry_solution_gradient_field = *bdry_solution_gradient();
+  mesh::Connectivity::ConstRow nodes = space.connectivity()[elem_idx];
+  vars.setZero();
+
+  boost_foreach( Uint n, interpolation.used_points() )
+  {
+    const Uint pt = nodes[n];
+    const Real L = interpolation.coeff(n);
+
+    for (Uint eq=0; eq<NEQS; ++eq)
+      vars[eq] += L * bdry_solution_field[pt][eq];
+  }
+
+  // Compute variables in point used for gradient
+  _rho = vars[0];
+  _u   = vars[1]/_rho;
+  _v   = vars[2]/_rho;
+  _E   = vars[3]/_rho;
+  _U2  = _u*_u+_v*_v;
+  _p   = (m_gamma-1.)*_rho*(_E - 0.5*_U2);
+  _T   = _p/(_rho*m_R);
+
+  for (Uint d=0; d<NDIM; ++d)
+  {
+    const mesh::ReconstructPoint& interpolate_derivative = gradient[d];
+    boost_foreach( Uint n, interpolate_derivative.used_points() )
+    {
+      const Uint pt = nodes[n];
+      const Real L = interpolate_derivative.coeff(n);
+      _grad_rho[d]  = L * bdry_solution_gradient_field[pt][0+d*NEQS];
+      _grad_rhou[d] = L * bdry_solution_gradient_field[pt][1+d*NEQS];
+      _grad_rhov[d] = L * bdry_solution_gradient_field[pt][2+d*NEQS];
+      _grad_rhoE[d] = L * bdry_solution_gradient_field[pt][3+d*NEQS];
+    }
+  }
+
+  _grad_u = 1./_rho * ( _grad_rhou - _u*_grad_rho );
+  _grad_v = 1./_rho * ( _grad_rhov - _v*_grad_rho );
+  _grad_T = ( (_grad_rhoE - _grad_u*_u - _grad_v*_v)*(m_gamma-1)*_rho -_p*_grad_rho )/(m_R*_rho*_rho);
+
+  gradvars[0] = _u;
+  gradvars[1] = _v;
+  gradvars[2] = _T;
+  gradvars_grad.col(0) = _grad_u;
+  gradvars_grad.col(1) = _grad_v;
+  gradvars_grad.col(2) = _grad_T;
+}
+
 
 void Terms2D::set_phys_data_constants( DATA& phys_data )
 {

@@ -53,6 +53,7 @@ void Terms2D::get_variables( const mesh::Space& space,
                              RowVector_NGRAD& gradvars,
                              Matrix_NDIMxNGRAD& gradvars_grad )
 {
+  const mesh::Field& solution_field = *solution();
   mesh::Connectivity::ConstRow nodes = space.connectivity()[elem_idx];
   vars.setZero();
   boost_foreach( Uint n, interpolation.used_points() )
@@ -60,10 +61,36 @@ void Terms2D::get_variables( const mesh::Space& space,
     const Real C = interpolation.coeff(n);
     for (Uint eq=0; eq<NEQS; ++eq)
     {
-      vars[eq] += C * solution()->array()[nodes[n]][eq];
+      vars[eq] += C * solution_field[nodes[n]][eq];
     }
   }
 }
+
+void Terms2D::get_bdry_variables( const mesh::Space& space,
+                                  const Uint elem_idx,
+                                  const ColVector_NDIM& coords,
+                                  const mesh::ReconstructPoint& interpolation,
+                                  const std::vector<mesh::ReconstructPoint>& gradient,
+                                  const Matrix_NDIMxNDIM& jacobian,
+                                  const Matrix_NDIMxNDIM& jacobian_inverse,
+                                  const Real& jacobian_determinant,
+                                  RowVector_NVAR& vars,
+                                  RowVector_NGRAD& gradvars,
+                                  Matrix_NDIMxNGRAD& gradvars_grad )
+{
+  const mesh::Field& bdry_solution_field = *bdry_solution();
+  mesh::Connectivity::ConstRow nodes = space.connectivity()[elem_idx];
+  vars.setZero();
+  boost_foreach( Uint n, interpolation.used_points() )
+  {
+    const Real C = interpolation.coeff(n);
+    for (Uint eq=0; eq<NEQS; ++eq)
+    {
+      vars[eq] += C * bdry_solution_field[nodes[n]][eq];
+    }
+  }
+}
+
 
 void Terms2D::set_phys_data_constants( DATA& phys_data )
 {

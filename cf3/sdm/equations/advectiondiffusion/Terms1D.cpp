@@ -52,18 +52,43 @@ void Terms1D::get_variables( const mesh::Space& space,
   vars.setZero();
   boost_foreach( Uint n, interpolation.used_points() )
   {
-    const Real C = interpolation.coeff(n);
-    vars[0] += C * solution()->array()[nodes[n]][0];
+    const Real L = interpolation.coeff(n);
+    vars[0] += L * solution()->array()[nodes[n]][0];
   }
   gradvars[0] = vars[0];
   gradvars_grad.setZero();
   boost_foreach( Uint n, gradient[0].used_points() )
   {
-    const Real C = gradient[0].coeff(n);
-    gradvars_grad(0,0) += C * solution()->array()[nodes[n]][0];
+    const Real D = gradient[0].coeff(n);
+    gradvars_grad(0,0) += D * solution()->array()[nodes[n]][0];
   }
-  gradvars_grad = jacobian_inverse*gradvars_grad;
+  gradvars_grad = jacobian_inverse * gradvars_grad;
 }
+
+void Terms1D::get_bdry_variables( const mesh::Space& space,
+                                  const Uint elem_idx,
+                                  const ColVector_NDIM& coords,
+                                  const mesh::ReconstructPoint& interpolation,
+                                  const std::vector<mesh::ReconstructPoint>& gradient,
+                                  const Matrix_NDIMxNDIM& jacobian,
+                                  const Matrix_NDIMxNDIM& jacobian_inverse,
+                                  const Real& jacobian_determinant,
+                                  RowVector_NVAR& vars,
+                                  RowVector_NGRAD& gradvars,
+                                  Matrix_NDIMxNGRAD& gradvars_grad )
+{
+  mesh::Connectivity::ConstRow nodes = space.connectivity()[elem_idx];
+  vars.setZero();
+  boost_foreach( Uint n, interpolation.used_points() )
+  {
+    const Real L = interpolation.coeff(n);
+    vars[0] += L * bdry_solution()->array()[nodes[n]][0];
+  }
+
+  CFwarn << "This is not implemented" << CFendl;
+  gradvars_grad.setZero();
+}
+
 
 void Terms1D::set_phys_data_constants( DATA& phys_data )
 {

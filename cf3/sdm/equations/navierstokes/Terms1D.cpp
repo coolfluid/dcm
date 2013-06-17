@@ -79,12 +79,6 @@ void Terms1D::get_variables( const mesh::Space& space,
   gradvars[0] = u;
   gradvars[1] = T;
 
-//  std::cout << "\nx = " << coords[XX] << std::endl;
-//  std::cout << "rho  = " << rho << std::endl;
-//  std::cout << "u    = " << u << std::endl;
-//  std::cout << "p    = " << p << std::endl;
-//  std::cout << "T    = " << T << std::endl;
-
   gradvars_grad.setZero();
   for (Uint d=0; d<NDIM; ++d)
   {
@@ -103,8 +97,73 @@ void Terms1D::get_variables( const mesh::Space& space,
       gradvars_grad(d,1) += C * T;
     }
   }
-  gradvars_grad = jacobian_inverse*gradvars_grad;
+  gradvars_grad = jacobian_inverse * gradvars_grad;
 }
+
+
+void Terms1D::get_bdry_variables( const mesh::Space& space,
+                                  const Uint elem_idx,
+                                  const ColVector_NDIM& coords,
+                                  const mesh::ReconstructPoint& interpolation,
+                                  const std::vector<mesh::ReconstructPoint>& gradient,
+                                  const Matrix_NDIMxNDIM& jacobian,
+                                  const Matrix_NDIMxNDIM& jacobian_inverse,
+                                  const Real& jacobian_determinant,
+                                  RowVector_NVAR& vars,
+                                  RowVector_NGRAD& gradvars,
+                                  Matrix_NDIMxNGRAD& gradvars_grad )
+{
+  const mesh::Field& bdry_solution_field = *bdry_solution();
+  const mesh::Field& bdry_solution_gradient_field = *bdry_solution_gradient();
+  mesh::Connectivity::ConstRow nodes = space.connectivity()[elem_idx];
+  vars.setZero();
+  boost_foreach( Uint n, interpolation.used_points() )
+  {
+    const Real C = interpolation.coeff(n);
+
+    for (Uint eq=0; eq<NEQS; ++eq)
+    {
+      vars[eq] += C * bdry_solution_field[nodes[n]][eq];
+    }
+  }
+  // Compute variables in point used for gradient
+  const Real rho = vars[0];
+  const Real u   = vars[1]/rho;
+  const Real E   = vars[2]/rho;
+  const Real U2  = u*u;
+  const Real p   = (m_gamma-1.)*rho*(E - 0.5*U2);
+  const Real T   = p/(rho*m_R);
+
+  gradvars[0] = u;
+  gradvars[1] = T;
+
+  ColVector_NDIM grad_rho;
+  ColVector_NDIM grad_rhou;
+  ColVector_NDIM grad_rhoE;
+  ColVector_NDIM grad_u;
+  ColVector_NDIM grad_v;
+  ColVector_NDIM grad_T;
+
+  for (Uint d=0; d<NDIM; ++d)
+  {
+    boost_foreach( Uint n, gradient[d].used_points() )
+    {
+      const Real C = gradient[d].coeff(n);
+
+      grad_rho[d]  = C * bdry_solution_gradient_field[nodes[n]][0+d*NEQS];
+      grad_rhou[d] = C * bdry_solution_gradient_field[nodes[n]][1+d*NEQS];
+      grad_rhoE[d] = C * bdry_solution_gradient_field[nodes[n]][2+d*NEQS];
+    }
+  }
+
+  grad_u = 1./rho * ( grad_rhou - u*grad_rho );
+  grad_T = ( (grad_rhoE - grad_u*u)*(m_gamma-1)*rho -p*grad_rho )/(m_R*rho*rho);
+
+  gradvars_grad.col(0) = grad_u;
+  gradvars_grad.col(1) = grad_T;
+}
+
+
 
 void Terms1D::set_phys_data_constants( DATA& phys_data )
 {
@@ -130,44 +189,6 @@ void Terms1D::compute_diffusive_flux(const DATA &p, const ColVector_NDIM &normal
                                      RowVector_NEQS &flux, Real &wave_speed)
 {
   physics::navierstokes::navierstokes1d::compute_diffusive_flux(p,normal,flux,wave_speed);
-  std::cout << "Fd = " << flux << std::endl;
-
-//  const Real& nx = normal[XX];
-//  const Real& ny = normal[YY];
-
-//  const Real& rho  = p.rho;
-//  const Real& rhou = p.rho*p.U[XX];
-//  const Real& rhov = p.rho*p.V[XX];
-//  const Real& rhoE = data.solution[3];
-
-//  const RealVectorNDIM& grad_rho  = data.solution_gradient.col(0);
-//  const RealVectorNDIM& grad_rhou = data.solution_gradient.col(1);
-//  const RealVectorNDIM& grad_rhov = data.solution_gradient.col(2);
-//  const RealVectorNDIM& grad_rhoE = data.solution_gradient.col(3);
-
-//  rho2 = rho*rho;
-//  rho3 = rho2*rho;
-//  grad_u = (rho*grad_rhou-rhou*grad_rho)/rho2;
-//  grad_v = (rho*grad_rhov-rhov*grad_rho)/rho2;
-//  grad_T = m_gamma_minus_1/(m_R*rho3) * (grad_rho*(-rho*rhoE+rhou*rhou+rhov*rhov)
-//                                         + rho*(rho*grad_rhoE-rhou*grad_rhou-rhov*grad_rhov));
-//  two_third_divergence_U = 2./3.*(grad_u[XX] + grad_v[YY]);
-
-//  // Viscous stress tensor
-//  tau_xx = m_mu*(2.*grad_u[XX] - two_third_divergence_U);
-//  tau_yy = m_mu*(2.*grad_v[YY] - two_third_divergence_U);
-//  tau_xy = m_mu*(grad_u[YY] + grad_v[XX]);
-
-//  // Heat flux
-//  heat_flux = -m_k*(grad_T[XX]*nx + grad_T[YY]*ny);
-
-//  flux[0] = 0.;
-//  flux[1] = tau_xx*nx + tau_xy*ny;
-//  flux[2] = tau_xy*nx + tau_yy*ny;
-//  flux[3] = (tau_xx*rhou + tau_xy*rhov)/rho*nx + (tau_xy*rhou + tau_yy*rhov)/rho*ny - heat_flux;
-
-//  // maximum of kinematic viscosity nu and thermal diffusivity alpha
-//  wave_speed = std::max(m_mu/rho, m_k/(rho*m_Cp));
 }
 
 void Terms1D::config_riemann_solver()
