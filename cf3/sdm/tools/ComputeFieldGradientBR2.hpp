@@ -101,12 +101,11 @@ void ComputeFieldGradientBR2::compute_gradient()
       const Uint nb_grad_pts = grad_sf->nb_nodes();
 
 
-      // Set BR2 coefficient alpha to 1/order when alpha is negative
+      // Set BR2 coefficient alpha to 1/(P+1) when alpha is negative
       m_alpha = options().template value<Real>("alpha");
       if (m_alpha < 0)
       {
-        if (sf->order()==0) m_alpha = 1.; // for consistency
-        else m_alpha = 0.5;
+        m_alpha = 1./((Real)sf->order()+1.);
       }
 
 
@@ -353,7 +352,7 @@ void ComputeFieldGradientBR2::compute_gradient()
               {
                 Uint flx_pt = face_pts[face_nb][f];
                 Uint neighbour_flx_pt = neighbour_face_pts[face_nb][f];
-                neighbour_jump[neighbour_flx_pt] = jump[flx_pt];
+                neighbour_jump[neighbour_flx_pt] = -jump[flx_pt];
                 if (element_metrics->flx_pt_coords(flx_pt) != neighbour_element_metrics->flx_pt_coords(neighbour_flx_pt))
                 {
                   std::cout << "mismatch: " << element_metrics->flx_pt_coords(flx_pt).transpose() << "    !=    " << neighbour_element_metrics->flx_pt_coords(neighbour_flx_pt).transpose() << std::endl;
@@ -393,11 +392,14 @@ void ComputeFieldGradientBR2::compute_gradient()
               avg_flx_pt_grad[flx_pt] += m_alpha*LambdaL[flx_pt];
               avg_flx_pt_grad[flx_pt] += m_alpha*LambdaR[flx_pt];
               avg_flx_pt_grad[flx_pt] *= 0.5;
-              avg_flx_pt_grad[flx_pt] = element_metrics->flx_pt_J(flx_pt) * avg_flx_pt_grad[flx_pt];
             }
           }
         } // end for (face_nb)
 
+        for (Uint flx_pt=0; flx_pt<nb_flx_pts; ++flx_pt)
+        {
+          avg_flx_pt_grad[flx_pt] = element_metrics->flx_pt_J(flx_pt) * avg_flx_pt_grad[flx_pt];
+        }
         for (Uint grad_pt=0; grad_pt<nb_grad_pts; ++grad_pt)
         {
           grad_pt_grad[grad_pt].setZero();

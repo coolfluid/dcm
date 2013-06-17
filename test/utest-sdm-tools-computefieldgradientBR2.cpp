@@ -26,6 +26,8 @@
 #include "cf3/mesh/Mesh.hpp"
 #include "cf3/mesh/Dictionary.hpp"
 #include "cf3/mesh/Field.hpp"
+#include "cf3/mesh/Space.hpp"
+#include "cf3/mesh/Cells.hpp"
 #include "cf3/mesh/SimpleMeshGenerator.hpp"
 #include "cf3/mesh/MeshTransformer.hpp"
 #include "cf3/mesh/Region.hpp"
@@ -84,10 +86,110 @@ BOOST_AUTO_TEST_CASE( init_mpi )
 
 ////////////////////////////////////////////////////////////////////////////////
 
-
-BOOST_AUTO_TEST_CASE( test_compute_grad )
+BOOST_AUTO_TEST_CASE( test_compute_grad_1d )
 {
   Handle<sdm::Model> model = Core::instance().root().create_component<sdm::Model>("model2d");
+
+  Handle<Mesh>          mesh           = model->domain()->create_component<Mesh>("mesh");
+  Handle<MeshGenerator> mesh_generator = model->tools()->create_component("mesh_generator","cf3.mesh.SimpleMeshGenerator")->handle<MeshGenerator>();
+  Real length=2*math::Consts::pi();
+  Uint nb_cells = 10;
+  mesh_generator->options().set("mesh",mesh->uri());
+  mesh_generator->options().set("lengths",std::vector<Real>(1,length));
+  mesh_generator->options().set("nb_cells",std::vector<Uint>(1,nb_cells));
+  mesh_generator->execute();
+  allocate_component<LoadBalance>("repartitioner")->transform(mesh);
+
+  Handle<Dictionary> solution_space = model->create_space("solution_space","cf3.sdm.core.LegendreGaussEndP2", std::vector< Handle<Component> >(1,mesh->handle()));
+
+  Field& field  = solution_space->create_field("field", SCALAR);
+  Field& coords = solution_space->coordinates();
+  boost_foreach( const Handle<Space>& space, field.spaces() )
+  {
+    for( Uint e=0; e<space->size(); ++e )
+    {
+      for( Uint n=0; n<space->shape_function().nb_nodes(); ++n )
+      {
+        const Uint p = space->connectivity()[e][n];
+        const Real& x = coords[p][0];
+        Real& y = field[p][0];
+        y = cos(2.*math::Consts::pi()*x/length);
+        Real overshoot=0.2;
+        if (n==0)
+        {
+          if(e<nb_cells/2)
+            y += std::abs(y*overshoot);
+          else
+            y -= std::abs(y*overshoot);
+        }
+        if (n==space->shape_function().nb_nodes()-1 )
+        {
+          if(e<nb_cells/2)
+            y -= std::abs(y*overshoot);
+          else
+            y += std::abs(y*overshoot);
+        }
+      }
+    }
+  }
+
+//  boost::shared_ptr<CreateField> create_field = allocate_component<CreateField>("create_field");
+//  std::vector<std::string> functions;
+//  functions.push_back("f=cos(x)");
+//  create_field->options().set("functions",functions);
+//  create_field->options().set("name",std::string("field"));
+//  create_field->options().set("dict",solution_space->uri());
+//  create_field->transform(mesh);
+
+//  Field& field = *solution_space->get_child_checked("field")->handle<Field>();
+  Field& grad = solution_space->create_field("grad",SCALAR);
+
+  boost::shared_ptr<sdm::tools::ComputeFieldGradientBR2> compute_gradient = allocate_component<sdm::tools::ComputeFieldGradientBR2>("compute_gradient");
+
+  compute_gradient->options().set("mesh",mesh->handle());
+  compute_gradient->options().set("field",field.handle());
+  compute_gradient->options().set("field_gradient",grad.handle());
+
+  compute_gradient->options().set("BR2",true);
+  compute_gradient->options().set("alpha",0.33);
+
+  compute_gradient->execute();
+
+  std::vector<URI> fields;
+  fields.push_back(field.uri());
+  fields.push_back(grad.uri());
+  mesh->write_mesh("file:out-utest-sdm-tools-fieldgradient-1d.msh",fields);
+
+  std::ofstream of("plot.tsv");
+  boost_foreach( const Handle<Space>& space, field.spaces() )
+  {
+    if (space->support().handle<Cells>())
+    {
+      std::cout << space->uri() << std::endl;
+      for( Uint e=0; e<space->size(); ++e )
+      {
+        std::cout << e << std::endl;
+        for( Uint n=0; n<space->shape_function().nb_nodes(); ++n )
+        {
+          const Uint p   = space->connectivity()[e][n];
+          const Real& x  = coords[p][0];
+          const Real& y  = field[p][0];
+          const Real& dy = grad[p][0];
+          of << x << "\t" << y << "\t" << dy << std::endl;
+        }
+      }
+    }
+  }
+
+  CFinfo << mesh->tree() << CFendl;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+BOOST_AUTO_TEST_CASE( test_compute_grad_2d )
+{
+  Handle<sdm::Model> model = Core::instance().root().create_component<sdm::Model>("model2d");
+
   Handle<Mesh>          mesh           = model->domain()->create_component<Mesh>("mesh");
   Handle<MeshGenerator> mesh_generator = model->tools()->create_component("mesh_generator","cf3.mesh.SimpleMeshGenerator")->handle<MeshGenerator>();
   mesh_generator->options().set("mesh",mesh->uri());
@@ -126,7 +228,7 @@ BOOST_AUTO_TEST_CASE( test_compute_grad )
   std::vector<URI> fields;
   fields.push_back(field.uri());
   fields.push_back(grad.uri());
-  mesh->write_mesh("file:out-utest-sdm-tools-fieldgradient.msh",fields);
+  mesh->write_mesh("file:out-utest-sdm-tools-fieldgradient-2d.msh",fields);
 
   CFinfo << mesh->tree() << CFendl;
 }
