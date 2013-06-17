@@ -83,9 +83,9 @@ void CellConnectivity::compute_cell( const mesh::Cells& cells, const Uint elem_i
         m_is_bdry_face[face_nb] = false;
 
         cf3_assert(face.idx < cell_connectivity.connectivity().size());
-        cf3_assert(is_not_null(cell_connectivity.connectivity()[face.idx][LEFT].comp))
-            cf3_assert(is_not_null(cell_connectivity.connectivity()[face.idx][RIGHT].comp))
-            if ( m_cell == cell_connectivity.connectivity()[face.idx][LEFT] )
+        cf3_assert(is_not_null(cell_connectivity.connectivity()[face.idx][LEFT].comp));
+        cf3_assert(is_not_null(cell_connectivity.connectivity()[face.idx][RIGHT].comp));
+        if ( m_cell == cell_connectivity.connectivity()[face.idx][LEFT] )
         {
           m_orientations[face_nb] = MATCHED;
           m_neighbor_orientations[face_nb] = INVERTED;

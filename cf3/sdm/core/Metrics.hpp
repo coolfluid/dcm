@@ -95,10 +95,6 @@ public:
       cf3_always_assert(m_flx_pt_Jvec_abs[flx_pt]>0);
       m_flx_pt_unit_normal[flx_pt] /= m_flx_pt_Jvec_abs[flx_pt];
 
-//      std::cout << "Jinv  = \n"<< m_flx_pt_Jinv[flx_pt]<<std::endl;
-//      std::cout << "|Jvec["<<d<<"]| = " << m_flx_pt_Jvec_abs[flx_pt]<<std::endl;
-//      std::cout << "normal = " << m_flx_pt_unit_normal[flx_pt] << std::endl;
-
       // Compute coordinates
       m_flx_pt_coords[flx_pt].setZero();
       boost_foreach (Uint n,  m_metrics.m_interpolation_from_cell_pts_to_flx_pts[flx_pt].used_points() )
@@ -107,20 +103,20 @@ public:
       }
     }
 
-    // Compute metrics in solution
+    // Compute metrics in solution points
     mesh::Connectivity::ConstRow nodes = m_metrics.m_space->connectivity()[elem_idx];
     for (Uint sol_pt=0; sol_pt<m_metrics.m_nb_sol_pts; ++sol_pt)
     {
       // Compute jacobian
-      // m_sol_pt_J[sol_pt] = m_cells->element_type().jacobian(m_sf->sol_pts().row(sol_pt), m_cell_coords);
-      // m_sol_pt_Jinv[sol_pt] = m_sol_pt_J[sol_pt].inverse();
-      // m_sol_pt_Jdet[sol_pt] = m_sol_pt_J[sol_pt].determinant();
+      m_sol_pt_J[sol_pt] = m_metrics.m_cells->element_type().jacobian(m_metrics.m_sf->sol_pts().row(sol_pt), m_cell_coords);
+      m_sol_pt_Jinv[sol_pt] = m_sol_pt_J[sol_pt].inverse();
+      m_sol_pt_Jdet[sol_pt] = m_sol_pt_J[sol_pt].determinant();
+      //m_sol_pt_Jdet[sol_pt] = m_metrics.m_cells->element_type().jacobian_determinant(m_metrics.m_sf->sol_pts().row(sol_pt), m_cell_coords);
 
       // Compute coordinates
       for (Uint d=0; d<NDIM; ++d)
         m_sol_pt_coords[sol_pt][d] = m_metrics.m_space_coords->array()[nodes[sol_pt]][d];
 
-      m_sol_pt_Jdet[sol_pt] = m_metrics.m_cells->element_type().jacobian_determinant(m_metrics.m_sf->sol_pts().row(sol_pt), m_cell_coords);
     }
   }
 
@@ -132,11 +128,11 @@ public:
   const ColVector_NDIM&
     sol_pt_coords(const Uint sol_pt) const;
 
-//  const Matrix_NDIMxNDIM&
-//    sol_pt_J(const Uint sol_pt) const;
+  const Matrix_NDIMxNDIM&
+    sol_pt_J(const Uint sol_pt) const;
 
-//  const Matrix_NDIMxNDIM&
-//    sol_pt_Jinv(const Uint sol_pt) const;
+  const Matrix_NDIMxNDIM&
+    sol_pt_Jinv(const Uint sol_pt) const;
 
   const Real&
     sol_pt_Jdet(const Uint sol_pt) const;
@@ -208,9 +204,6 @@ public: // functions
 
   void compute_element(const Uint elem_idx);
 
-  const RealMatrix&
-    cell_coords() const;
-
   const mesh::ReconstructPoint&
     interpolation_from_cell_pts_to_flx_pt(const Uint flx_pt) const;
   
@@ -221,7 +214,7 @@ public: // functions
     set_zero(const Uint pt=0) const;
 
   const std::vector<mesh::ReconstructPoint>&
-    zero_grad(const Uint pt=0) const;
+    copy_grad(const Uint pt) const;
 
   const mesh::ReconstructPoint&
     copy_pt(const Uint pt) const;
@@ -246,35 +239,6 @@ public: // functions
 
   const std::vector< mesh::ReconstructPoint >&
     gradient_from_flx_pts_to_sol_pt(const Uint sol_pt) const;
-  
-  const ColVector_NDIM&
-    sol_pt_coords(const Uint sol_pt) const;
-  
-//  const Matrix_NDIMxNDIM&
-//    sol_pt_J(const Uint sol_pt) const;
-  
-//  const Matrix_NDIMxNDIM&
-//    sol_pt_Jinv(const Uint sol_pt) const;
-  
-  const Real& 
-    sol_pt_Jdet(const Uint sol_pt) const;
-  
-  const ColVector_NDIM& flx_pt_coords(const Uint flx_pt) const;
-  
-  const Matrix_NDIMxNDIM& 
-    flx_pt_J(const Uint flx_pt) const;
-  
-  const Matrix_NDIMxNDIM& 
-    flx_pt_Jinv(const Uint flx_pt) const;
-  
-  const Real& 
-    flx_pt_Jdet(const Uint flx_pt) const;
-  
-  const ColVector_NDIM&
-    flx_pt_unit_normal(const Uint flx_pt) const;
-  
-  const Real&
-    flx_pt_Jvec_abs(const Uint flx_pt) const;
 
   Handle< ElementMetrics<NB_DIM> > element(const Uint elem_idx);
 
@@ -305,8 +269,8 @@ private:
   std::vector< Real >             m_flx_pt_Jvec_abs;
 
   mesh::ReconstructPoint                                m_set_zero;
-  std::vector< mesh::ReconstructPoint >                 m_zero_grad;
   std::vector< mesh::ReconstructPoint >                 m_copy_pt;
+  std::vector< std::vector< mesh::ReconstructPoint > >  m_copy_grad;
   std::vector< mesh::ReconstructPoint >                 m_interpolation_from_cell_pts_to_flx_pts;
   std::vector< mesh::ReconstructPoint >                 m_interpolation_from_sol_pts_to_flx_pts;
   std::vector< std::vector< mesh::ReconstructPoint > >  m_line_interpolation_from_flx_pts_to_sol_pts;
@@ -351,41 +315,20 @@ void Metrics<NB_DIM>::setup_for_space(const Handle<mesh::Space const>& space)
     m_nb_sol_pts = m_sf->nb_sol_pts();
     m_nb_flx_pts = m_sf->nb_flx_pts();
 
-    m_cells->geometry_space().allocate_coordinates(m_cell_coords);
-
-    m_sol_pt_coords .resize(m_nb_sol_pts);
-    m_sol_pt_J      .resize(m_nb_sol_pts);
-    m_sol_pt_Jinv   .resize(m_nb_sol_pts);
-    m_sol_pt_Jdet   .resize(m_nb_sol_pts);
-
-    m_flx_pt_coords      .resize(m_nb_flx_pts);
-    m_flx_pt_J           .resize(m_nb_flx_pts);
-    m_flx_pt_Jinv        .resize(m_nb_flx_pts);
-    m_flx_pt_Jdet        .resize(m_nb_flx_pts);
-    m_flx_pt_unit_normal .resize(m_nb_flx_pts);
-    m_flx_pt_Jvec_abs    .resize(m_nb_flx_pts);
-    
     m_interpolation_from_cell_pts_to_flx_pts .resize(m_nb_flx_pts);
     m_interpolation_from_sol_pts_to_flx_pts  .resize(m_nb_flx_pts);
-    m_copy_pt                                .resize(m_nb_flx_pts);
+    m_copy_pt                                .resize(m_nb_flx_pts); // the size is only to make sure that it is big enough. it has nothing to do with flux points
+    m_copy_grad                              .resize(m_nb_flx_pts, std::vector<mesh::ReconstructPoint>(NDIM)); // the size is only to make sure that it is big enough. it has nothing to do with flux points
     m_line_interpolation_from_flx_pts_to_sol_pts  .resize(m_nb_sol_pts, std::vector<mesh::ReconstructPoint>(NDIM));
     m_derivation_from_sol_pts_to_flx_pts     .resize(m_nb_flx_pts, std::vector<mesh::ReconstructPoint>(NDIM));
-    m_derivation_from_flx_pts_to_sol_pts     .resize(m_nb_sol_pts, std::vector<mesh::ReconstructPoint >(NDIM));
-    m_derivation_from_flx_pts_to_flx_pts     .resize(m_nb_flx_pts, std::vector<mesh::ReconstructPoint >(NDIM));
-    m_derivation_from_sol_pts_to_sol_pts     .resize(m_nb_sol_pts, std::vector<mesh::ReconstructPoint >(NDIM));
+    m_derivation_from_flx_pts_to_sol_pts     .resize(m_nb_sol_pts, std::vector<mesh::ReconstructPoint>(NDIM));
+    m_derivation_from_flx_pts_to_flx_pts     .resize(m_nb_flx_pts, std::vector<mesh::ReconstructPoint>(NDIM));
+    m_derivation_from_sol_pts_to_sol_pts     .resize(m_nb_sol_pts, std::vector<mesh::ReconstructPoint>(NDIM));
 
 
     m_set_zero.m_N.resize(m_nb_flx_pts);
     m_set_zero.m_N.setZero();
     m_set_zero.m_pts.clear();
-
-    m_zero_grad.resize(NDIM);
-    for (Uint d=0; d<NDIM; ++d)
-    {
-      m_zero_grad[d].m_N.resize(m_nb_flx_pts);
-      m_zero_grad[d].m_N.setZero();
-      m_zero_grad[d].m_pts.clear();
-    }
 
     for (Uint flx_pt=0; flx_pt<m_nb_flx_pts; ++flx_pt)
     {
@@ -414,6 +357,17 @@ void Metrics<NB_DIM>::setup_for_space(const Handle<mesh::Space const>& space)
       m_copy_pt[flx_pt].m_N[flx_pt]=1.;
       m_copy_pt[flx_pt].m_pts.resize(1);
       m_copy_pt[flx_pt].m_pts[0]=flx_pt;
+
+      m_copy_grad[flx_pt].resize(NDIM);
+      for (Uint d=0; d<NDIM; ++d)
+      {
+        m_copy_grad[flx_pt][d].m_N.resize(m_nb_flx_pts);
+        m_copy_grad[flx_pt][d].m_N.setZero();
+        m_copy_grad[flx_pt][d].m_N[flx_pt]=1.;
+        m_copy_grad[flx_pt][d].m_pts.resize(1);
+        m_copy_grad[flx_pt][d].m_pts[0]=flx_pt;
+      }
+
     }
 
 
@@ -449,12 +403,8 @@ Handle< ElementMetrics<NB_DIM> > Metrics<NB_DIM>::element(const Uint elem_idx)
 {
   if( is_null( m_element_metrics_cache[elem_idx] ) )
   {
-    //std::cout << "computing element" << std::endl;
+    // compute element
     m_element_metrics_cache[elem_idx] = boost::shared_ptr< ElementMetrics<NB_DIM> >( new ElementMetrics<NB_DIM>(*this, elem_idx) );
-  }
-  else
-  {
-    //std::cout << "cached element" << std::endl;
   }
   return make_handle( m_element_metrics_cache[elem_idx] );
 }
@@ -467,73 +417,9 @@ void Metrics<NB_DIM>::compute_element(const Uint elem_idx)
   if (elem_idx != m_elem_idx)
   {
     m_element_metrics = element(elem_idx);
-#if 0
-    m_cells->geometry_space().put_coordinates(m_cell_coords,elem_idx);
-
-    // Compute metrics in flux points
-    for (Uint flx_pt=0; flx_pt<m_nb_flx_pts; ++flx_pt)
-    {
-      // Compute jacobian
-      m_cells->element_type().compute_jacobian(m_sf->flx_pts().row(flx_pt), m_cell_coords,m_flx_pt_J[flx_pt]);
-      m_flx_pt_Jinv[flx_pt] = m_flx_pt_J[flx_pt].inverse();
-      m_flx_pt_Jdet[flx_pt] = m_flx_pt_J[flx_pt].determinant();
-      cf3_always_assert(m_flx_pt_Jdet[flx_pt]>0);
-
-      // Compute the unit-normal of the KSI, ETA or ZTA direction
-      const Uint d = m_sf->flx_pt_dir(flx_pt);
-      cf3_assert_desc(common::to_str(d)+"<"+common::to_str((Uint)NDIM),d<NDIM);
-      m_flx_pt_unit_normal[flx_pt] = m_flx_pt_Jinv[flx_pt].col(d) * m_flx_pt_Jdet[flx_pt];
-      m_flx_pt_Jvec_abs[flx_pt] = m_flx_pt_unit_normal[flx_pt].norm();
-      cf3_always_assert(m_flx_pt_Jvec_abs[flx_pt]>0);
-      m_flx_pt_unit_normal[flx_pt] /= m_flx_pt_Jvec_abs[flx_pt];
-
-//      std::cout << "Jinv  = \n"<< m_flx_pt_Jinv[flx_pt]<<std::endl;
-//      std::cout << "|Jvec["<<d<<"]| = " << m_flx_pt_Jvec_abs[flx_pt]<<std::endl;
-//      std::cout << "normal = " << m_flx_pt_unit_normal[flx_pt] << std::endl;
-
-      // Compute coordinates
-      m_flx_pt_coords[flx_pt].setZero();
-      boost_foreach (Uint n,  m_interpolation_from_cell_pts_to_flx_pts[flx_pt].used_points() )
-      {
-        m_flx_pt_coords[flx_pt] += m_interpolation_from_cell_pts_to_flx_pts[flx_pt].coeff(n) * m_cell_coords.row(n);
-      }
-    }
-
-    // Compute metrics in solution
-    mesh::Connectivity::ConstRow nodes = m_space->connectivity()[elem_idx];
-    for (Uint sol_pt=0; sol_pt<m_nb_sol_pts; ++sol_pt)
-    {
-      // Compute jacobian
-      // m_sol_pt_J[sol_pt] = m_cells->element_type().jacobian(m_sf->sol_pts().row(sol_pt), m_cell_coords);
-      // m_sol_pt_Jinv[sol_pt] = m_sol_pt_J[sol_pt].inverse();
-      // m_sol_pt_Jdet[sol_pt] = m_sol_pt_J[sol_pt].determinant();
-
-      // Compute coordinates
-      for (Uint d=0; d<NDIM; ++d)
-        m_sol_pt_coords[sol_pt][d] = m_space_coords->array()[nodes[sol_pt]][d];
-
-      m_sol_pt_Jdet[sol_pt] = m_cells->element_type().jacobian_determinant(m_sf->sol_pts().row(sol_pt), m_cell_coords);
-    }
-#endif
-
   }
 }
 
-////////////////////////////////////////////////////////////////////////////////
-
-template <Uint NB_DIM>
-inline const RealMatrix&
-  ElementMetrics<NB_DIM>::cell_coords() const
-{
-  return m_cell_coords;
-}
-
-template <Uint NB_DIM>
-inline const RealMatrix&
-  Metrics<NB_DIM>::cell_coords() const
-{
-  return m_element_metrics->cell_coords();
-}
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -567,9 +453,9 @@ inline const mesh::ReconstructPoint&
 
 template <Uint NB_DIM>
 inline const std::vector<mesh::ReconstructPoint>&
-  Metrics<NB_DIM>::zero_grad(const Uint pt) const
+  Metrics<NB_DIM>::copy_grad(const Uint pt) const
 {
-  return m_zero_grad;
+  return m_copy_grad[pt];
 }
 
 template <Uint NB_DIM>
@@ -621,7 +507,17 @@ inline const std::vector< mesh::ReconstructPoint >&
   return m_derivation_from_flx_pts_to_sol_pts[sol_pt];
 }
 
+
 ////////////////////////////////////////////////////////////////////////////////
+
+template <Uint NB_DIM>
+inline const RealMatrix&
+  ElementMetrics<NB_DIM>::cell_coords() const
+{
+  return m_cell_coords;
+}
+
+//////////////////////////////////////////////////////////////////////////////////
 
 template <Uint NB_DIM>
 inline const typename ElementMetrics<NB_DIM>::ColVector_NDIM&
@@ -631,25 +527,18 @@ inline const typename ElementMetrics<NB_DIM>::ColVector_NDIM&
 }
 
 template <Uint NB_DIM>
-inline const typename Metrics<NB_DIM>::ColVector_NDIM&
-  Metrics<NB_DIM>::sol_pt_coords(const Uint sol_pt) const
+inline const typename ElementMetrics<NB_DIM>::Matrix_NDIMxNDIM&
+  ElementMetrics<NB_DIM>::sol_pt_J(const Uint sol_pt) const
 {
-  return m_element_metrics->sol_pt_coords(sol_pt);
+  return m_sol_pt_J[sol_pt];
 }
 
-//template <Uint NB_DIM>
-//inline const typename Metrics<NB_DIM>::Matrix_NDIMxNDIM&
-//  Metrics<NB_DIM>::sol_pt_J(const Uint sol_pt) const
-//{
-//  return m_sol_pt_J[sol_pt];
-//}
-
-//template <Uint NB_DIM>
-//inline const typename Metrics<NB_DIM>::Matrix_NDIMxNDIM&
-//  Metrics<NB_DIM>::sol_pt_Jinv(const Uint sol_pt) const
-//{
-//  return m_sol_pt_Jinv[sol_pt];
-//}
+template <Uint NB_DIM>
+inline const typename ElementMetrics<NB_DIM>::Matrix_NDIMxNDIM&
+  ElementMetrics<NB_DIM>::sol_pt_Jinv(const Uint sol_pt) const
+{
+  return m_sol_pt_Jinv[sol_pt];
+}
 
 
 template <Uint NB_DIM>
@@ -659,14 +548,7 @@ inline const Real&
   return m_sol_pt_Jdet[sol_pt];
 }
 
-template <Uint NB_DIM>
-inline const Real&
-  Metrics<NB_DIM>::sol_pt_Jdet(const Uint sol_pt) const
-{
-  return m_element_metrics->sol_pt_Jdet(sol_pt);
-}
-
-////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
 
 template <Uint NB_DIM>
 inline const typename ElementMetrics<NB_DIM>::ColVector_NDIM&
@@ -676,29 +558,11 @@ inline const typename ElementMetrics<NB_DIM>::ColVector_NDIM&
 }
 
 template <Uint NB_DIM>
-inline const typename Metrics<NB_DIM>::ColVector_NDIM&
-  Metrics<NB_DIM>::flx_pt_coords(const Uint flx_pt) const
-{
-  return m_element_metrics->flx_pt_coords(flx_pt);
-}
-
-
-
-template <Uint NB_DIM>
 inline const typename ElementMetrics<NB_DIM>::Matrix_NDIMxNDIM&
   ElementMetrics<NB_DIM>::flx_pt_J(const Uint flx_pt) const
 {
   return m_flx_pt_J[flx_pt];
 }
-
-template <Uint NB_DIM>
-inline const typename Metrics<NB_DIM>::Matrix_NDIMxNDIM&
-  Metrics<NB_DIM>::flx_pt_J(const Uint flx_pt) const
-{
-  return m_element_metrics->flx_pt_J(flx_pt);
-}
-
-
 
 template <Uint NB_DIM>
 inline const typename ElementMetrics<NB_DIM>::Matrix_NDIMxNDIM&
@@ -708,29 +572,11 @@ inline const typename ElementMetrics<NB_DIM>::Matrix_NDIMxNDIM&
 }
 
 template <Uint NB_DIM>
-inline const typename Metrics<NB_DIM>::Matrix_NDIMxNDIM&
-  Metrics<NB_DIM>::flx_pt_Jinv(const Uint flx_pt) const
-{
-  return m_element_metrics->flx_pt_Jinv(flx_pt);
-}
-
-
-
-template <Uint NB_DIM>
 inline const Real&
   ElementMetrics<NB_DIM>::flx_pt_Jdet(const Uint flx_pt) const
 {
   return m_flx_pt_Jdet[flx_pt];
 }
-
-template <Uint NB_DIM>
-inline const Real&
-  Metrics<NB_DIM>::flx_pt_Jdet(const Uint flx_pt) const
-{
-  return m_element_metrics->flx_pt_Jdet(flx_pt);
-}
-
-
 
 template <Uint NB_DIM>
 inline const typename ElementMetrics<NB_DIM>::ColVector_NDIM&
@@ -740,26 +586,10 @@ inline const typename ElementMetrics<NB_DIM>::ColVector_NDIM&
 }
 
 template <Uint NB_DIM>
-inline const typename Metrics<NB_DIM>::ColVector_NDIM&
-  Metrics<NB_DIM>::flx_pt_unit_normal(const Uint flx_pt) const
-{
-  return m_element_metrics->flx_pt_unit_normal(flx_pt);
-}
-
-
-
-template <Uint NB_DIM>
 inline const Real&
   ElementMetrics<NB_DIM>::flx_pt_Jvec_abs(const Uint flx_pt) const
 {
   return m_flx_pt_Jvec_abs[flx_pt];
-}
-
-template <Uint NB_DIM>
-inline const Real&
-  Metrics<NB_DIM>::flx_pt_Jvec_abs(const Uint flx_pt) const
-{
-  return m_element_metrics->flx_pt_Jvec_abs(flx_pt);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

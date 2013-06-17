@@ -36,7 +36,7 @@ model.tools.init_field.init_field( field=euler.solution, functions =
 
 ### Solve
 solver = model.add_solver(pde=euler,solver='cf3.sdm.solver.erk.MidPoint')
-solver.children.time_step_computer.cfl=0.01
+solver.children.time_step_computer.cfl=0.3
 solver.solve_time_step(0.008)
 
 mesh.write_mesh(file=cf.URI('file:euler-shocktube-2d.msh'), fields=[euler.solution.uri()])
