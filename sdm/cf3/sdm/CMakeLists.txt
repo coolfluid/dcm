@@ -1,4 +1,3 @@
-
 list( APPEND coolfluid_sdm_files
   LibSDM.hpp
   LibSDM.cpp
@@ -16,4 +15,4 @@ coolfluid3_add_library( TARGET  coolfluid_sdm
                             coolfluid_dcm_equations_les
                         PLUGINS DCM )
 
-message( "sdm includes: ${coolfluid_sdm_includedirs}")
+add_subdirectory( solver )
