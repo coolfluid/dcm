@@ -19,7 +19,7 @@ load_balance.execute()
 
 ### Add PDE
 euler = model.add_pde(name='euler',type='cf3.dcm.equations.euler.Euler1D',shape_function='cf3.dcm.core.LegendreGaussEndP2')
-euler.add_term(name='rhs',type='cf3.sdm.br2_euler_RightHandSide1D')
+euler.add_term(name='rhs',type='cf3.sdm.br2.euler_RightHandSide1D')
 euler.gamma = 1.4
 euler.R = 287.05
 

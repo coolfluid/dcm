@@ -122,7 +122,7 @@ BOOST_AUTO_TEST_CASE( test_navierstokes_2d )
   pde->options().set("R",1.);
   pde->options().set("riemann_solver",std::string("Roe"));
 
-  pde->add_term("rhs","cf3.sdm.br2_navierstokes_RightHandSide2D");
+  pde->add_term("rhs","cf3.sdm.br2.navierstokes_RightHandSide2D");
 
   std::vector< Handle<Component> > bc_regions;
   bc_regions.push_back( mesh->access_component("topology/left") );

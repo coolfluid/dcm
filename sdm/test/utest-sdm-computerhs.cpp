@@ -33,7 +33,7 @@
 #include "cf3/mesh/actions/LoadBalance.hpp"
 #include "cf3/dcm/Model.hpp"
 #include "cf3/solver/ComputeRHS.hpp"
-#include "cf3/sdm/BR2.hpp"
+#include "cf3/sdm/br2/BR2.hpp"
 #include "Term.hpp"
 
 using namespace boost;
@@ -45,7 +45,7 @@ using namespace cf3::common::PE;
 using namespace cf3::mesh;
 using namespace cf3::mesh::actions;
 using namespace cf3::solver;
-using namespace cf3::sdm;
+using namespace cf3::sdm::br2;
 using namespace cf3::dcm::core;
 
 struct testfixture

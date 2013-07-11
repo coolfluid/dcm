@@ -118,7 +118,7 @@ BOOST_AUTO_TEST_CASE( test_euler_1d )
   Handle<solver::PDE> euler = model->add_pde( /*name*/  "euler",
                                               /*type*/  "cf3.dcm.equations.euler.Euler1D",
                                               /*sf*/    "cf3.dcm.core.LegendreGaussEndP4" );
-  euler->add_term("rhs","cf3.sdm.br2_euler_RightHandSide1D");
+  euler->add_term("rhs","cf3.sdm.br2.euler_RightHandSide1D");
   euler->options().set("gamma",1.4);
   euler->options().set("R",287.05);
   euler->options().set("riemann_solver",std::string("Roe"));
@@ -230,7 +230,7 @@ BOOST_AUTO_TEST_CASE( test_euler_2d )
   Handle<solver::PDE> euler = model->add_pde( /*name*/  "euler",
                                               /*type*/  "cf3.dcm.equations.euler.Euler2D",
                                               /*sf*/    "cf3.dcm.core.LegendreGaussEndP0" );
-  euler->add_term("rhs","cf3.sdm.br2_euler_RightHandSide2D");
+  euler->add_term("rhs","cf3.sdm.br2.euler_RightHandSide2D");
   euler->options().set("gamma",1.4);
   euler->options().set("R",287.05);
   euler->options().set("riemann_solver",std::string("Roe"));

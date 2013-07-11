@@ -114,7 +114,7 @@ BOOST_AUTO_TEST_CASE( test_advection_1d )
   Handle<solver::PDE> pde = model->add_pde( /*name*/  "advectiondiffusion",
                                             /*type*/  "cf3.dcm.equations.advectiondiffusion.AdvectionDiffusion1D",
                                             /*sf*/    "cf3.dcm.core.LegendreGaussEndP1" );
-  pde->add_term("rhs","cf3.sdm.br2_advectiondiffusion_RightHandSide1D");
+  pde->add_term("rhs","cf3.sdm.br2.advectiondiffusion_RightHandSide1D");
   pde->options().set("a",1.);
   pde->options().set("mu",0.);
 
@@ -195,7 +195,7 @@ BOOST_AUTO_TEST_CASE( test_diffusion_1d )
   Handle<solver::PDE> pde = model->add_pde( /*name*/  "advectiondiffusion",
                                             /*type*/  "cf3.dcm.equations.advectiondiffusion.AdvectionDiffusion1D",
                                             /*sf*/    "cf3.dcm.core.LegendreGaussEndP2" );
-  pde->add_term("rhs","cf3.sdm.br2_advectiondiffusion_RightHandSide1D");
+  pde->add_term("rhs","cf3.sdm.br2.advectiondiffusion_RightHandSide1D");
   pde->options().set("a",0.);
   pde->options().set("mu",1.);
 
@@ -276,7 +276,7 @@ BOOST_AUTO_TEST_CASE( test_advection_2d )
   Handle<solver::PDE> pde = model->add_pde( /*name*/  "advectiondiffusion",
                                             /*type*/  "cf3.dcm.equations.advectiondiffusion.AdvectionDiffusion2D",
                                             /*sf*/    "cf3.dcm.core.LegendreGaussEndP0" );
-  pde->add_term("rhs","cf3.sdm.br2_advectiondiffusion_RightHandSide2D");
+  pde->add_term("rhs","cf3.sdm.br2.advectiondiffusion_RightHandSide2D");
 
   std::vector<Real> a(dim);
   a[XX] = 0.;
@@ -362,7 +362,7 @@ BOOST_AUTO_TEST_CASE( test_diffusion_2d )
   Handle<solver::PDE> pde = model->add_pde( /*name*/  "advectiondiffusion",
                                             /*type*/  "cf3.dcm.equations.advectiondiffusion.AdvectionDiffusion2D",
                                             /*sf*/    "cf3.dcm.core.LegendreGaussEndP1" );
-  pde->add_term("rhs","cf3.sdm.br2_advectiondiffusion_RightHandSide2D");
+  pde->add_term("rhs","cf3.sdm.br2.advectiondiffusion_RightHandSide2D");
 
   std::vector<Real> a(dim);
   a[XX] = 0.;

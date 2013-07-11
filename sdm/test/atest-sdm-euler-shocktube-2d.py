@@ -23,7 +23,7 @@ euler = model.add_pde(name='euler',
                       shape_function='cf3.dcm.core.LegendreGaussEndP2')
 euler.gamma = 1.4
 euler.R = 287.05
-euler.add_term(name='rhs',type='cf3.sdm.br2_euler_RightHandSide2D')
+euler.add_term(name='rhs',type='cf3.sdm.br2.euler_RightHandSide2D')
 euler.add_bc(name='mirror',type='cf3.dcm.equations.euler.BCMirror2D',regions=
 [ mesh.topology.left, mesh.topology.right, mesh.topology.top, mesh.topology.bottom ])
 

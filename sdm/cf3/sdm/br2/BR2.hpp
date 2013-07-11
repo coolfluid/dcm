@@ -4,14 +4,14 @@
 // GNU Lesser General Public License version 3 (LGPLv3).
 // See doc/lgpl.txt and doc/gpl.txt for the license text.
 
-#ifndef cf3_sdm_BR2_hpp
-#define cf3_sdm_BR2_hpp
+#ifndef cf3_sdm_br2_BR2_hpp
+#define cf3_sdm_br2_BR2_hpp
 
 #include "cf3/math/Consts.hpp"
 #include "cf3/mesh/Connectivity.hpp"
 #include "cf3/solver/TermComputer.hpp"
 #include "cf3/physics/MatrixTypes.hpp"
-#include "cf3/sdm/LibSDM.hpp"
+#include "cf3/sdm/br2/LibBR2.hpp"
 #include "cf3/dcm/core/CellConnectivity.hpp"
 #include "cf3/dcm/core/ShapeFunction.hpp"
 #include "cf3/dcm/core/Reconstructions.hpp"
@@ -22,6 +22,7 @@
 
 namespace cf3 {
 namespace sdm {
+namespace br2 {
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -29,7 +30,7 @@ namespace sdm {
 /// @note - It is assumed that all cells are of the same shape function
 ///       - flux points and solution points are aligned
 template < typename TERM >
-class sdm_API BR2 : public solver::TermComputer {
+class sdm_br2_API BR2 : public solver::TermComputer {
 
 public: // types
 
@@ -699,7 +700,8 @@ void BR2<TERM>::compute_term(const Uint elem_idx, std::vector<RealVector>& term,
 
 ////////////////////////////////////////////////////////////////////////////////
 
+} // br2
 } // sdm
 } // cf3
 
-#endif // cf3_sdm_BR2_hpp
+#endif // cf3_sdm_br2_BR2_hpp

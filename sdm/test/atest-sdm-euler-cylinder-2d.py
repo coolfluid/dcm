@@ -26,7 +26,7 @@ euler = model.add_pde(name='euler',type='cf3.dcm.equations.euler.Euler2D',shape_
 euler.gamma = gamma
 euler.R = R
 
-euler.add_term(name='rhs',type='cf3.sdm.br2_euler_RightHandSide2D')
+euler.add_term(name='rhs',type='cf3.sdm.br2.euler_RightHandSide2D')
 
 ### Add BC
 bc_wall = euler.add_bc( name='wall',

@@ -4,25 +4,23 @@
 // GNU Lesser General Public License version 3 (LGPLv3).
 // See doc/lgpl.txt and doc/gpl.txt for the license text.
 
-#ifndef cf3_sdm_LibSDM_hpp
-#define cf3_sdm_LibSDM_hpp
+#ifndef cf3_sdm_br2_LibBR2_hpp
+#define cf3_sdm_br2_LibBR2_hpp
 
-#define SANDBOX
-//#undef SANDBOX
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "cf3/common/Library.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 
-/// Define the macro sdm_API
-/// @note build system defines COOLFLUID_SDM_EXPORTS when compiling sdm files
-#ifdef COOLFLUID_SDM_EXPORTS
-#   define sdm_API      CF3_EXPORT_API
-#   define sdm_TEMPLATE
+/// Define the macro sdm_br2_API
+/// @note build system defines COOLFLUID_SDM_BR2_EXPORTS when compiling
+#ifdef COOLFLUID_SDM_BR2_EXPORTS
+#   define sdm_br2_API      CF3_EXPORT_API
+#   define sdm_br2_TEMPLATE
 #else
-#   define sdm_API      CF3_IMPORT_API
-#   define sdm_TEMPLATE CF3_TEMPLATE_EXTERN
+#   define sdm_br2_API      CF3_IMPORT_API
+#   define sdm_br2_TEMPLATE CF3_TEMPLATE_EXTERN
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -36,34 +34,36 @@ namespace cf3 {
 /// @author Willem Deconinck
 namespace sdm {
 
+/// @brief BR2 namespace
+///
+/// Library containing term computers of the Spectral Difference Method.
+/// Diffusive terms are computed using the second approach of Bassi-Rebay (BR2)
+/// @author Willem Deconinck
+namespace br2 {
+
 ////////////////////////////////////////////////////////////////////////////////
 
-/// @brief Defines the Spectral Finite Difference Core library
-///
-/// This library implements Core components to construct a Spectral Finite Difference Solver.";
+/// @brief Defines the Spectral Finite Difference library with BR2 scheme
 /// @author Willem Deconinck
-class sdm_API LibSDM :
+class sdm_br2_API LibBR2 :
     public cf3::common::Library
 {
 public:
 
-  
-  
-
   /// Constructor
-  LibSDM ( const std::string& name) : cf3::common::Library(name) { }
+  LibBR2 ( const std::string& name) : cf3::common::Library(name) { }
 
-  virtual ~LibSDM() { }
+  virtual ~LibBR2() { }
 
 public: // functions
 
   /// @return string of the library namespace
-  static std::string library_namespace() { return "cf3.sdm"; }
+  static std::string library_namespace() { return "cf3.sdm.br2"; }
 
   /// Static function that returns the library name.
   /// Must be implemented for Library registration
   /// @return name of the library
-  static std::string library_name() { return "sdm"; }
+  static std::string library_name() { return "br2"; }
 
   /// Static function that returns the description of the library.
   /// Must be implemented for Library registration
@@ -71,20 +71,21 @@ public: // functions
 
   static std::string library_description()
   {
-    return "This library implements Core components to construct a Spectral Finite Difference Solver.";
+    return "This library implements SDM with BR2 scheme";
   }
 
   /// Gets the Class name
-  static std::string type_name() { return "LibSDM"; }
+  static std::string type_name() { return "LibBR2"; }
   
   virtual void initiate();
-}; // end LibSDM
+}; // end LibBR2
 
 ////////////////////////////////////////////////////////////////////////////////
 
+} // br2
 } // sdm
 } // cf3
 
 ////////////////////////////////////////////////////////////////////////////////
 
-#endif // cf3_sdm_LibSDM_hpp
+#endif // cf3_sdm_br2_LibBR2_hpp

@@ -14,7 +14,7 @@ lineuler.U0 = [0.5,0]
 lineuler.rho0 = 1
 lineuler.p0 = 1
 
-lineuler.add_term( name='rhs', type='cf3.sdm.br2_lineuler_TermsUniform2D' )
+lineuler.add_term( name='rhs', type='cf3.sdm.br2.lineuler_TermsUniform2D' )
 
 ### Add BC
 lineuler.add_bc( name='farfield',
