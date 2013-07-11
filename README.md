@@ -1,4 +1,3 @@
-
 ## Discontinuous Collocation Methods ##
 
 This repository contains two plugins that provide extra functionality to the coolfluid 3 project.
@@ -32,7 +31,7 @@ Provided in this plugin are, using building blocks from the DCM plugin:
 ```
 mkdir -p $PLUGIN_DIR
 cd $PLUGIN_DIR
-git clone https://github.com/coolfluid/sdm.git $PLUGIN_DIR/dcm_plugins
+git clone https://github.com/coolfluid/dcm.git $PLUGIN_DIR/dcm_plugins
 ```
 
   + Rerun cmake in the coolfluid3 build directory:
