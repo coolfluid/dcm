@@ -34,9 +34,8 @@ model.tools.init_field.init_field(
     '1.* exp( -log(2.)*((x)^2+y^2)/9. )' ] )
 
 ### Create the Solver for the Partial Differential Equations
-solver = model.add_solver(name='rk_solver',pde=lineuler)
-solver.children.time_step_computer.cfl = 0.2
-solver.options.order = 3
+solver = model.add_solver(pde=lineuler,name='optim_erk',solver='cf3.sdm.solver.optim_erkls.ERK_18_4')
+solver.children.time_step_computer.cfl = 1.5*1.17418695241
 
 ### Time Stepping
 model.time_stepping.end_time = 1 #90

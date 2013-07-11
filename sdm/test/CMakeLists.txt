@@ -65,71 +65,71 @@ coolfluid_add_test( UTEST      utest-sdm-convection
 
 coolfluid_add_test( UTEST      utest-sdm-diffusion
                     CPP        utest-sdm-diffusion.cpp
-                    LIBS       coolfluid_sdm coolfluid_mesh_gmsh coolfluid_sdm_equations_scalar
+                    LIBS       coolfluid_sdm coolfluid_mesh_gmsh coolfluid_dcm_equations_scalar
                     MPI        1 
                     CONDITION  OFF )
 
 coolfluid_add_test( UTEST      utest-sdm-navierstokesmovingreference-2d
                     CPP        utest-sdm-navierstokesmovingreference-2d.cpp
-                    LIBS       coolfluid_sdm coolfluid_sdm_equations_navierstokesmovingreference 
+                    LIBS       coolfluid_sdm coolfluid_dcm_equations_navierstokesmovingreference
                     CONDITION  OFF )
 
 coolfluid_add_test( UTEST      utest-sdm-navierstokesmovingreference-3d
                     CPP        utest-sdm-navierstokesmovingreference-3d.cpp
-                    LIBS       coolfluid_sdm coolfluid_sdm_equations_navierstokesmovingreference 
+                    LIBS       coolfluid_sdm coolfluid_dcm_equations_navierstokesmovingreference
                     CONDITION  OFF )
 
 coolfluid_add_test( ATEST      atest-sdm-scalar-linadv-3d
                     PYTHON     atest-sdm-scalar-linadv-3d.py
-                    LIBS       coolfluid_sdm coolfluid_sdm_equations_scalar
+                    LIBS       coolfluid_sdm coolfluid_dcm_equations_scalar
                     CONDITION  OFF )
                     
 coolfluid_add_test( ATEST      atest-sdm-euler-shocktube-1d
                     PYTHON     atest-sdm-euler-shocktube-1d.py
-                    LIBS       coolfluid_sdm coolfluid_sdm_equations_euler )
+                    LIBS       coolfluid_sdm coolfluid_dcm_equations_euler )
 
 coolfluid_add_test( ATEST      atest-sdm-euler-shocktube-2d
                     PYTHON     atest-sdm-euler-shocktube-2d.py
-                    LIBS       coolfluid_sdm coolfluid_sdm_equations_euler )
+                    LIBS       coolfluid_sdm coolfluid_dcm_equations_euler )
 
 coolfluid_add_test( ATEST      atest-sdm-euler-cylinder-2d
                     PYTHON     atest-sdm-euler-cylinder-2d.py
-                    LIBS       coolfluid_sdm coolfluid_sdm_equations_euler
+                    LIBS       coolfluid_sdm coolfluid_dcm_equations_euler
                     MPI        2
                     DEPENDS    copy-resources )
 
 coolfluid_add_test( ATEST      atest-sdm-lineuler-acousticpulse-2d
                     PYTHON     atest-sdm-lineuler-acousticpulse-2d.py
-                    LIBS       coolfluid_sdm coolfluid_sdm_equations_lineuler
+                    LIBS       coolfluid_sdm coolfluid_dcm_equations_lineuler
                     DEPENDS    copy-resources)
 
 coolfluid_add_test( ATEST      atest-sdm-lineuler-wallbc-2d
                     PYTHON     atest-sdm-lineuler-wallbc-2d.py
-                    LIBS       coolfluid_sdm coolfluid_sdm_equations_lineuler
+                    LIBS       coolfluid_sdm coolfluid_dcm_equations_lineuler
                     DEPENDS    copy-resources)
                     
 coolfluid_add_test( ATEST      atest-sdm-lineuler-acousticvorticityentropypulse-2d
                     PYTHON     atest-sdm-lineuler-acousticvorticityentropypulse-2d.py
-                    LIBS       coolfluid_sdm_equations_lineuler
+                    LIBS       coolfluid_dcm_equations_lineuler coolfluid_sdm_solver_optim_erkls
                     DEPENDS    copy-resources )
                     
 
 coolfluid_add_test( ATEST      atest-sdm-lineuler-acousticpulse-3d
                     PYTHON     atest-sdm-lineuler-acousticpulse-3d.py
-                    LIBS       coolfluid_sdm coolfluid_sdm_equations_lineuler
+                    LIBS       coolfluid_sdm coolfluid_dcm_equations_lineuler
                     DEPENDS    copy-resources 
                     CONDITION  OFF )
 
 coolfluid_add_test( ATEST      atest-sdm-lineuler-machcone-3d
                     PYTHON     atest-sdm-lineuler-machcone-3d.py
-                    LIBS       coolfluid_sdm_equations_lineuler
+                    LIBS       coolfluid_dcm_equations_lineuler
                     DEPENDS    copy-resources
                     MPI        2 
                     CONDITION  OFF )
 
 coolfluid_add_test( ATEST      atest-sdm-channelflow-movingref-2d
                     PYTHON     atest-sdm-channelflow-movingref-2d.py
-                    LIBS       coolfluid_sdm_navierstokes coolfluid_sdm_equations_navierstokesmovingreference
+                    LIBS       coolfluid_sdm_navierstokes coolfluid_dcm_equations_navierstokesmovingreference
                     MPI        1 
                     CONDITION  OFF )
 
