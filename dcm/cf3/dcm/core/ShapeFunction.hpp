@@ -40,6 +40,12 @@ public:
   virtual const RealMatrix& local_coordinates() const { return sol_pts(); }
 
   // Concrete implementation
+  virtual const RealMatrix& mononomial_coefficients() const;
+
+  // Concrete implementation
+  virtual const RealMatrix& mononomial_exponents() const;
+
+  // Concrete implementation
   virtual RealRowVector value(const RealVector& local_coordinate) const;
 
   // Concrete implementation

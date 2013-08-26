@@ -20,6 +20,24 @@ ShapeFunction::ShapeFunction(const std::string& name) : mesh::ShapeFunction(name
 
 ////////////////////////////////////////////////////////////////////////////////
 
+const RealMatrix& ShapeFunction::mononomial_coefficients() const
+{
+  throw common::NotImplemented( FromHere(), "mononomial_coefficients not implemented");
+  static RealMatrix dummy;
+  return dummy;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+const RealMatrix& ShapeFunction::mononomial_exponents() const
+{
+  throw common::NotImplemented( FromHere(), "mononomial_exponents not implemented");
+  static RealMatrix dummy;
+  return dummy;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 } // core
 } // dcm
 } // cf3

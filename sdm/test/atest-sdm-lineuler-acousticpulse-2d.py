@@ -64,10 +64,6 @@ compute_norm.order = 2
 compute_norm.execute()
 print "norm = ",compute_norm.properties()['norm']
 
-
-
-
-
 ########################
 # OUTPUT
 ########################
