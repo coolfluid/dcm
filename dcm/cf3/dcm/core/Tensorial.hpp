@@ -7,7 +7,6 @@
 #ifndef cf3_dcm_core_Tensorial_hpp
 #define cf3_dcm_core_Tensorial_hpp
 
-#include "cf3/common/BoostArray.hpp"
 #include "cf3/common/StringConversion.hpp"
 
 #include "cf3/math/MatrixTypes.hpp"
@@ -70,6 +69,102 @@ struct dcm_core_API Lagrange
   }
 };
 
+struct dcm_core_API MononomialBasisFunctions
+{
+  MononomialBasisFunctions() { }
+
+  void compute(const Uint order_, const RealMatrix& pts)
+  {
+    order = order_;
+    dim = pts.cols();
+    npts = pts.rows();
+    V.resize(npts,npts);
+    exponents.resize(npts,dim);
+    coefficients.resize(npts,npts);
+    Uint n=0;
+    if (dim==1)
+    {
+      for(Uint k=0; k<=order; ++k)
+      {
+        cf3_assert_desc( common::to_str(n)+"<"+common::to_str(exponents.rows()),n<exponents.rows() );
+        exponents(n,KSI) = k;
+        ++n;
+      }
+      for (n=0; n<npts; ++n)
+      {
+        Real ksi = pts(n,KSI);
+        for (Uint p=0; p<npts; ++p)
+        {
+          Real ksi_p = ( exponents(p,KSI) == 0. ? 1.: std::pow(ksi,exponents(p,KSI)) );
+          V(n,p) = ksi_p;
+        }
+      }
+    }
+    else if (dim==2)
+    {
+      for(Uint l=0; l<=order; ++l) {
+        for(Uint k=0; k<=order; ++k) {
+          cf3_assert_desc( common::to_str(n)+"<"+common::to_str(exponents.rows()),n<exponents.rows() );
+          exponents(n,KSI) = k;
+          exponents(n,ETA) = l;
+          ++n;
+        }
+      }
+      for (n=0; n<npts; ++n)
+      {
+        Real ksi = pts(n,KSI);
+        Real eta = pts(n,ETA);
+        for (Uint p=0; p<npts; ++p)
+        {
+          Real ksi_p = ( exponents(p,KSI) == 0. ? 1.: std::pow(ksi,exponents(p,KSI)) );
+          Real eta_p = ( exponents(p,ETA) == 0. ? 1.: std::pow(eta,exponents(p,ETA)) );
+          V(n,p) = ksi_p * eta_p;
+        }
+      }
+    }
+    else if (dim==3)
+    {
+      for(Uint m=0; m<=order; ++m) {
+        for(Uint l=0; l<=order; ++l) {
+          for(Uint k=0; k<=order; ++k) {
+            cf3_assert_desc( common::to_str(n)+"<"+common::to_str(exponents.rows()),n<exponents.rows() );
+            exponents(n,KSI) = k;
+            exponents(n,ETA) = l;
+            exponents(n,ZTA) = m;
+            ++n;
+          }
+        }
+      }
+      for (n=0; n<npts; ++n)
+      {
+        Real ksi = pts(n,KSI);
+        Real eta = pts(n,ETA);
+        Real zta = pts(n,ZTA);
+        for (Uint p=0; p<npts; ++p)
+        {
+          Real ksi_p = ( exponents(p,KSI) == 0. ? 1.: std::pow(ksi,exponents(p,KSI)) );
+          Real eta_p = ( exponents(p,ETA) == 0. ? 1.: std::pow(eta,exponents(p,ETA)) );
+          Real zta_p = ( exponents(p,ZTA) == 0. ? 1.: std::pow(zta,exponents(p,ZTA)) );
+          V(n,p) = ksi_p * eta_p * zta_p;
+        }
+      }
+    }
+
+    else {
+      throw common::ShouldNotBeHere(FromHere(), "dimension "+common::to_str(dim)+" doesn't exist.");
+    }
+
+    coefficients = V.inverse().transpose();
+  }
+
+  Uint order;
+  Uint npts;
+  Uint dim;
+  RealMatrix V;
+  RealMatrix exponents;
+  RealMatrix coefficients;
+};
+
 ////////////////////////////////////////////////////////////////////////////////
 
 template< typename DISTRIBUTION_1D, int P >
@@ -100,6 +195,8 @@ public: // functions
 
     m_face_flx_pts.resize(0);
     m_flx_pt_sign.resize(1,1.);
+
+    m_mononomial.compute(0u,m_sol_pts);
   }
 
   virtual ~Point() {}
@@ -135,6 +232,8 @@ public: // functions
   virtual const std::vector<Uint>& face_flx_pts(const Uint face_idx, const Uint orientation, const Uint rotation) const { cf3_assert(face_idx<nb_faces()); return m_face_flx_pts[face_idx]; }
   virtual const std::vector<Uint>& inverted_face_flx_pts(const Uint face_idx, const Uint rotation = 0) const { cf3_assert(face_idx<nb_faces()); return m_face_flx_pts[face_idx]; }
   virtual const Real& flx_pt_sign(const Uint flx_pt) const { return m_flx_pt_sign[flx_pt]; }
+  virtual const RealMatrix& mononomial_coefficients() const { return m_mononomial.coefficients; }
+  virtual const RealMatrix& mononomial_exponents() const { return m_mononomial.exponents; }
 
 private: // data
 
@@ -150,6 +249,7 @@ private: // data
   std::vector<std::vector<Uint> >     m_face_flx_pts;     ///< Flux points that on the cell faces
   std::vector<Real>                   m_flx_pt_sign;      ///< Sign to be multiplied with computed flux in flx_pt in direction dir
 
+  MononomialBasisFunctions            m_mononomial;       ///< mononomial coefficients and exponents
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -211,6 +311,7 @@ public: // functions
     m_face_normals(KSI_NEG,KSI)=-1;
     m_face_normals(KSI_POS,KSI)=+1;
 
+    m_mononomial.compute(m_order,m_sol_pts);
   }
 
   virtual ~Line() {}
@@ -261,6 +362,8 @@ public: // functions
   virtual const std::vector<Uint>& face_flx_pts(const Uint face_idx, const Uint orientation, const Uint rotation) const { cf3_assert(face_idx<nb_faces()); return m_face_flx_pts[face_idx]; }
   virtual const std::vector<Uint>& inverted_face_flx_pts(const Uint face_idx, const Uint rotation = 0) const { cf3_assert(face_idx<nb_faces()); return m_face_flx_pts[face_idx]; }
   virtual const Real& flx_pt_sign(const Uint flx_pt) const { return m_flx_pt_sign[flx_pt]; }
+  virtual const RealMatrix& mononomial_coefficients() const { return m_mononomial.coefficients; }
+  virtual const RealMatrix& mononomial_exponents() const { return m_mononomial.exponents; }
 
 private: // data
 
@@ -272,6 +375,7 @@ private: // data
   std::vector<Uint>                   m_interior_flx_pts; ///< Flux points that lie inside the cell, not on the faces
   std::vector< std::vector<Uint> >    m_face_flx_pts;     ///< Flux points that on the cell faces
   std::vector<Real>                   m_flx_pt_sign;                          ///< Sign to be multiplied with computed flux in flx_pt in direction dir
+  MononomialBasisFunctions            m_mononomial;       ///< mononomial coefficients and exponents
 
 };
 
@@ -416,6 +520,7 @@ public: // functions
 
       }
     }
+    m_mononomial.compute(m_order,m_sol_pts);
   }
 
 
@@ -506,6 +611,8 @@ public: // functions
   virtual const std::vector<Uint>& interior_flx_pts() const { return m_interior_flx_pts; }
   virtual const std::vector<Uint>& face_flx_pts(const Uint face_idx, const Uint orientation, const Uint rotation) const { cf3_assert(face_idx<nb_faces()); return m_face_flx_pts[face_idx][rotation]; }
   virtual const Real& flx_pt_sign(const Uint flx_pt) const { return m_flx_pt_sign[flx_pt]; }
+  virtual const RealMatrix& mononomial_coefficients() const { return m_mononomial.coefficients; }
+  virtual const RealMatrix& mononomial_exponents() const { return m_mononomial.exponents; }
 
 private: // data
 
@@ -520,6 +627,7 @@ private: // data
   std::vector<Uint>                   m_interior_flx_pts;              ///< Flux points that lie inside the cell, not on the faces
   std::vector< std::vector< std::vector<Uint> > > m_face_flx_pts;      ///< Flux points that on the cell faces
   std::vector<Real>                   m_flx_pt_sign;                   ///< Sign to be multiplied with computed flux in flx_pt in direction dir
+  MononomialBasisFunctions            m_mononomial;                    ///< mononomial coefficients and exponents
 };
 
 
@@ -762,8 +870,7 @@ public: // functions
         }
       }
     }
-
-
+    m_mononomial.compute(m_order,m_sol_pts);
   }
 
 
@@ -913,6 +1020,8 @@ public: // functions
   virtual const std::vector<Uint>& interior_flx_pts() const { return m_interior_flx_pts; }
   virtual const std::vector<Uint>& face_flx_pts(const Uint face_idx, const Uint orientation, const Uint rotation) const { cf3_assert(face_idx<nb_faces()); cf3_assert(rotation<NROTATIONS); return m_face_flx_pts[face_idx][orientation][rotation]; }
   virtual const Real& flx_pt_sign(const Uint flx_pt) const { return m_flx_pt_sign[flx_pt]; }
+  virtual const RealMatrix& mononomial_coefficients() const { return m_mononomial.coefficients; }
+  virtual const RealMatrix& mononomial_exponents() const { return m_mononomial.exponents; }
 
 private: // data
 
@@ -927,6 +1036,7 @@ private: // data
   RealMatrix                          m_face_normals;                         ///< Rows are normals to faces according to FaceNumbering
   std::vector<Uint>                   m_interior_flx_pts;                     ///< Flux points that lie inside the cell, not on the faces
   std::vector<Real>                   m_flx_pt_sign;                          ///< Sign to be multiplied with computed flux in flx_pt in direction dir
+  MononomialBasisFunctions            m_mononomial;                           ///< mononomial coefficients and exponents
 };
 
 
