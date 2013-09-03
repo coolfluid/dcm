@@ -309,7 +309,7 @@ BOOST_AUTO_TEST_CASE( test_euler_2d )
                                                        "cf3.dcm.solver.erk.MidPoint",
                                                        "cf3.solver.ImposeCFL" );
  solver->time_step_computer()->options().set("cfl",0.9);
- 
+
   // Handle<solver::PDESolver> solver = model->add_solver( "LUSGS", euler,
   //                                                       "cf3.dcm.solver.lusgs.BDF1",
   //                                                       "cf3.solver.ImposeCFL" );

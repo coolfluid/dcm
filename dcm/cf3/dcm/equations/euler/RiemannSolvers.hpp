@@ -21,20 +21,24 @@ namespace dcm {
 namespace equations {
 namespace euler {
 
+typedef solver::RiemannSolver<
+    cf3::physics::euler::euler1d::Data,
+    cf3::physics::euler::euler1d::NDIM,
+    cf3::physics::euler::euler1d::NEQS > RiemannSolver1D;
+
+typedef solver::RiemannSolver<
+    cf3::physics::euler::euler2d::Data,
+    cf3::physics::euler::euler2d::NDIM,
+    cf3::physics::euler::euler2d::NEQS > RiemannSolver2D;
+
 ////////////////////////////////////////////////////////////////////////////////
 
-class dcm_equations_euler_API Roe1D :
-    public solver::RiemannSolver< cf3::physics::euler::euler1d::Data,
-                                  cf3::physics::euler::euler1d::NDIM,
-                                  cf3::physics::euler::euler1d::NEQS >
+class dcm_equations_euler_API Roe1D : public RiemannSolver1D
 {
 public:
 
-  Roe1D(const std::string& name) :
-    solver::RiemannSolver< cf3::physics::euler::euler1d::Data,
-                           cf3::physics::euler::euler1d::NDIM,
-                           cf3::physics::euler::euler1d::NEQS >(name) {};
-  virtual ~Roe1D() {};
+  Roe1D(const std::string& name) : RiemannSolver1D(name) {}
+  virtual ~Roe1D() {}
   static std::string type_name() { return "Roe1D"; }
 
   virtual void compute_riemann_flux( const Data& left, const Data& right, const ColVector_NDIM& normal,
@@ -46,17 +50,11 @@ public:
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class dcm_equations_euler_API Roe2D :
-    public solver::RiemannSolver< cf3::physics::euler::euler2d::Data,
-                                  cf3::physics::euler::euler2d::NDIM,
-                                  cf3::physics::euler::euler2d::NEQS >
+class dcm_equations_euler_API Roe2D : public RiemannSolver2D
 {
 public:
 
-  Roe2D(const std::string& name) :
-    solver::RiemannSolver< cf3::physics::euler::euler2d::Data,
-                           cf3::physics::euler::euler2d::NDIM,
-                           cf3::physics::euler::euler2d::NEQS >(name) {};
+  Roe2D(const std::string& name) : RiemannSolver2D(name) {}
   virtual ~Roe2D() {}
   static std::string type_name() { return "Roe2D"; }
 
@@ -69,18 +67,12 @@ public:
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class dcm_equations_euler_API HLLE1D :
-    public solver::RiemannSolver< cf3::physics::euler::euler1d::Data,
-                                  cf3::physics::euler::euler1d::NDIM,
-                                  cf3::physics::euler::euler1d::NEQS >
+class dcm_equations_euler_API HLLE1D : public RiemannSolver1D
 {
 public:
 
-  HLLE1D(const std::string& name) :
-    solver::RiemannSolver< cf3::physics::euler::euler1d::Data,
-                           cf3::physics::euler::euler1d::NDIM,
-                           cf3::physics::euler::euler1d::NEQS >(name) {};
-  virtual ~HLLE1D() {};
+  HLLE1D(const std::string& name) : RiemannSolver1D(name) {}
+  virtual ~HLLE1D() {}
   static std::string type_name() { return "HLLE1D"; }
 
   virtual void compute_riemann_flux( const Data& left, const Data& right, const ColVector_NDIM& normal,
@@ -92,17 +84,11 @@ public:
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class dcm_equations_euler_API HLLE2D :
-    public solver::RiemannSolver< cf3::physics::euler::euler2d::Data,
-                                  cf3::physics::euler::euler2d::NDIM,
-                                  cf3::physics::euler::euler2d::NEQS >
+class dcm_equations_euler_API HLLE2D : public RiemannSolver2D
 {
 public:
 
-  HLLE2D(const std::string& name) :
-    solver::RiemannSolver< cf3::physics::euler::euler2d::Data,
-                           cf3::physics::euler::euler2d::NDIM,
-                           cf3::physics::euler::euler2d::NEQS >(name) {};
+  HLLE2D(const std::string& name) : RiemannSolver2D(name) {}
   virtual ~HLLE2D() {}
   static std::string type_name() { return "HLLE2D"; }
 
@@ -115,18 +101,12 @@ public:
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class dcm_equations_euler_API Rusanov1D :
-    public solver::RiemannSolver< cf3::physics::euler::euler1d::Data,
-                                  cf3::physics::euler::euler1d::NDIM,
-                                  cf3::physics::euler::euler1d::NEQS >
+class dcm_equations_euler_API Rusanov1D : public RiemannSolver1D
 {
 public:
 
-  Rusanov1D(const std::string& name) :
-    solver::RiemannSolver< cf3::physics::euler::euler1d::Data,
-                           cf3::physics::euler::euler1d::NDIM,
-                           cf3::physics::euler::euler1d::NEQS >(name) {};
-  virtual ~Rusanov1D() {};
+  Rusanov1D(const std::string& name) : RiemannSolver1D(name) {}
+  virtual ~Rusanov1D() {}
   static std::string type_name() { return "Rusanov1D"; }
 
   virtual void compute_riemann_flux( const Data& left, const Data& right, const ColVector_NDIM& normal,
@@ -138,17 +118,11 @@ public:
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class dcm_equations_euler_API Rusanov2D :
-    public solver::RiemannSolver< cf3::physics::euler::euler2d::Data,
-                                  cf3::physics::euler::euler2d::NDIM,
-                                  cf3::physics::euler::euler2d::NEQS >
+class dcm_equations_euler_API Rusanov2D : public RiemannSolver2D
 {
 public:
 
-  Rusanov2D(const std::string& name) :
-    solver::RiemannSolver< cf3::physics::euler::euler2d::Data,
-                           cf3::physics::euler::euler2d::NDIM,
-                           cf3::physics::euler::euler2d::NEQS >(name) {};
+  Rusanov2D(const std::string& name) : RiemannSolver2D(name) {}
   virtual ~Rusanov2D() {}
   static std::string type_name() { return "Rusanov2D"; }
 

@@ -12,8 +12,6 @@ namespace dcm {
 namespace equations {
 namespace euler {
 
-using namespace cf3::physics::euler;
-
 ////////////////////////////////////////////////////////////////////////////////
 
 common::ComponentBuilder<Roe1D,common::Component,LibEuler> Roe1D_builder;
