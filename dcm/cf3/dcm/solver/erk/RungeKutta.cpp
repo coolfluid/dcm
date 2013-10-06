@@ -131,7 +131,7 @@ void RungeKuttaImplementation::step()
           const Field& R_j = (*m_rhs_stages[j]);  // R from previous stages
           for (Uint pt=0; pt<U.size(); ++pt)
           {
-            for (Uint v=0; v<U.row_size(); ++v)
+            for (Uint v=0; v<nb_eqs; ++v)
             {
               U[pt][v] += H[pt][0] * a_j * R_j[pt][v];
             }
@@ -151,12 +151,18 @@ void RungeKuttaImplementation::step()
           const Field& R_j = (*m_rhs_stages[j]);  // R from previous stages
           for (Uint pt=0; pt<U.size(); ++pt)
           {
-            for (Uint v=0; v<U.row_size(); ++v)
+            for (Uint v=0; v<nb_eqs; ++v)
             {
               R[pt][v] += butcher.b(j) * R_j[pt][v];
-              U[pt][v] += H[pt][0] * R[pt][v];
             }
           }
+        }
+      }
+      for (Uint pt=0; pt<U.size(); ++pt)
+      {
+        for (Uint v=0; v<nb_eqs; ++v)
+        {
+          U[pt][v] += H[pt][0] * R[pt][v];
         }
       }
     }
