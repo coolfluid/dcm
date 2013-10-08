@@ -75,23 +75,25 @@ void RightHandSide1D::get_bdry_variables( const mesh::Space& space,
                                   RowVector_NGRAD& gradvars,
                                   Matrix_NDIMxNGRAD& gradvars_grad )
 {
+  const mesh::Field& bdry_solution_field = *bdry_solution();
+  const mesh::Field& bdry_solution_gradient_field = *bdry_solution_gradient();
   mesh::Connectivity::ConstRow nodes = space.connectivity()[elem_idx];
   vars.setZero();
+
   boost_foreach( Uint n, interpolation.used_points() )
   {
+    const Uint pt = nodes[n];
     const Real L = interpolation.coeff(n);
-    vars[0] += L * bdry_solution()->array()[nodes[n]][0];
+    vars[0] += L * bdry_solution_field[pt][0];
   }
-
   gradvars = vars;
-  gradvars_grad.setZero();
-  for( Uint d=0; d<NDIM; ++d)
+
+  const mesh::ReconstructPoint& interpolate_derivative = gradient[0];
+  boost_foreach( Uint n, interpolate_derivative.used_points() )
   {
-    boost_foreach( Uint n, gradient[d].used_points() )
-    {
-      const Real D = gradient[d].coeff(n);
-      gradvars_grad[0] += D * bdry_solution()->array()[nodes[n]][0];
-    }
+    const Uint pt = nodes[n];
+    const Real L = interpolate_derivative.coeff(n);
+    gradvars_grad[0] = L * bdry_solution_gradient_field[pt][0];
   }
 }
 

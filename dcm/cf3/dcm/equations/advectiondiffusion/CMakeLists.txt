@@ -11,6 +11,12 @@ list( APPEND coolfluid_dcm_equations_advectiondiffusion_files
   RightHandSide1D.cpp
   RightHandSide2D.hpp
   RightHandSide2D.cpp
+  BCDirichlet.hpp
+  BCDirichlet.cpp
+  BCNeumann.hpp
+  BCNeumann.cpp
+  BCExtrapolation.hpp
+  BCExtrapolation.cpp
   Terms.hpp
 )
 
