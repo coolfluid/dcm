@@ -5,6 +5,7 @@ model   = cf.root.create_component('accousticpulse_2d','cf3.dcm.Model');
 
 ### Load the mesh
 mesh = model.domain.load_mesh(file = cf.URI('../../../resources/circle-quad-p1-32.msh'), name = 'circle');
+model.build_faces();
 
 ### Add the Partial Differential Equations to solve
 lineuler = model.add_pde(name='lineuler',type='cf3.dcm.equations.lineuler.LinEulerUniform2D',

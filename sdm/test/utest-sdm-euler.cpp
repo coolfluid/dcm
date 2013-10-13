@@ -92,7 +92,7 @@ BOOST_AUTO_TEST_CASE( init_mpi )
 
 ////////////////////////////////////////////////////////////////////////////////
 
-#if 0
+#if 1
 BOOST_AUTO_TEST_CASE( test_euler_1d )
 {
   // Create simulation model
@@ -110,7 +110,8 @@ BOOST_AUTO_TEST_CASE( test_euler_1d )
   mesh_generator->options().set("lengths",std::vector<Real>(dim,10));
   mesh_generator->execute();
   allocate_component<LoadBalance>("repartitioner")->transform(mesh);
-  
+  model->build_faces();
+
   // ---------------------------------------------------------------------------------------
   //      CREATE PHYSICS
   // ---------------------------------------------------------------------------------------
@@ -157,23 +158,23 @@ BOOST_AUTO_TEST_CASE( test_euler_1d )
   //      SOLVE WITH RUNGEKUTTA
   // ---------------------------------------------------------------------------------------
 
-//  Handle<solver::PDESolver> solver = model->add_solver( "RK_solver", euler,
-//                                                        "cf3.dcm.solver.erkls.TwoSstar",
-//                                                        "cf3.solver.ImposeCFL" );
-//  solver->options().set("order",4);
-//  solver->time_step_computer()->options().set("cfl",0.4);
-
-  Handle<solver::PDESolver> solver = model->add_solver( "lusgs", euler,
-                                                        "cf3.dcm.solver.lusgs.BDF1",
+  Handle<solver::PDESolver> solver = model->add_solver( "RK_solver", euler,
+                                                        "cf3.dcm.solver.erkls.TwoSstar",
                                                         "cf3.solver.ImposeCFL" );
-  solver->time_step_computer()->options().set("cfl",std::string("min(4,0.05*(i+1))"));
-  std::vector<Real> Qref(euler->nb_eqs());
-  Qref[0] = 1.4;
-  Qref[1] = 500;
-  Qref[2] = 1e5;
-  solver->get_child("jacobian")->options().set("reference_solution",Qref);
-  solver->options().set("max_sweeps",50);
-  solver->options().set("convergence_level",1e-6);
+  solver->options().set("order",4);
+  solver->time_step_computer()->options().set("cfl",0.1);
+
+//  Handle<solver::PDESolver> solver = model->add_solver( "lusgs", euler,
+//                                                        "cf3.dcm.solver.lusgs.BDF1",
+//                                                        "cf3.solver.ImposeCFL" );
+//  solver->time_step_computer()->options().set("cfl",std::string("min(4,0.05*(i+1))"));
+//  std::vector<Real> Qref(euler->nb_eqs());
+//  Qref[0] = 1.4;
+//  Qref[1] = 500;
+//  Qref[2] = 1e5;
+//  solver->get_child("jacobian")->options().set("reference_solution",Qref);
+//  solver->options().set("max_sweeps",50);
+//  solver->options().set("convergence_level",1e-6);
 
   // ---------------------------------------------------------------------------------------
   //      TIME STEPPING
@@ -196,9 +197,6 @@ BOOST_AUTO_TEST_CASE( test_euler_1d )
   std::vector<URI> fields;
   fields.push_back(euler->solution()->uri());
   fields.push_back(euler->fields()->get_child("rhs")->uri());
-  fields.push_back(euler->fields()->get_child("residual")->uri());
-  fields.push_back(euler->fields()->get_child("dQ")->uri());
-  fields.push_back(euler->fields()->get_child("convergence")->uri());
   mesh->write_mesh(URI("file:euler1d.plt"), fields);
 }
 #endif
@@ -222,6 +220,7 @@ BOOST_AUTO_TEST_CASE( test_euler_2d )
   mesh_generator->options().set("lengths",std::vector<Real>(dim,10));
   mesh_generator->execute();
   allocate_component<LoadBalance>("repartitioner")->transform(mesh);
+  model->build_faces();
 
   // ---------------------------------------------------------------------------------------
   //      CREATE PHYSICS

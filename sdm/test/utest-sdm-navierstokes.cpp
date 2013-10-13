@@ -110,6 +110,7 @@ BOOST_AUTO_TEST_CASE( test_navierstokes_2d )
   mesh_generator->options().set("lengths",std::vector<Real>(dim,10));
   mesh_generator->execute();
   allocate_component<LoadBalance>("repartitioner")->transform(mesh);
+  model->build_faces();
 
   // ---------------------------------------------------------------------------------------
   //      CREATE PHYSICS

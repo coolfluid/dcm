@@ -16,6 +16,8 @@ repartitioner=mesh.create_component('repartitioner','cf3.mesh.actions.LoadBalanc
 repartitioner.mesh = mesh
 repartitioner.execute()
 
+model.build_faces()
+
 ### Add the Partial Differential Equations to solve
 lineuler = model.add_pde(name='lineuler',type='cf3.dcm.equations.lineuler.LinEulerUniform2D',
     shape_function='cf3.dcm.core.LegendreGaussEndP2')

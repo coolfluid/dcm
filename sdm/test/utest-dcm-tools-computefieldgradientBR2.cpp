@@ -98,6 +98,7 @@ BOOST_AUTO_TEST_CASE( test_compute_grad_1d )
   mesh_generator->options().set("nb_cells",std::vector<Uint>(1,nb_cells));
   mesh_generator->execute();
   allocate_component<LoadBalance>("repartitioner")->transform(mesh);
+  model->build_faces();
 
   Handle<Dictionary> solution_space = model->create_space("solution_space","cf3.dcm.core.LegendreGaussEndP2", std::vector< Handle<Component> >(1,mesh->handle()));
 
@@ -203,6 +204,7 @@ BOOST_AUTO_TEST_CASE( test_compute_grad_2d )
   rotate_mesh->options().set("axis_point",std::vector<Real>(2,math::Consts::pi()));
   rotate_mesh->execute();
 
+  model->build_faces();
   Handle<Dictionary> solution_space = model->create_space("solution_space","cf3.dcm.core.LegendreGaussEndP3", std::vector< Handle<Component> >(1,mesh->handle()));
 
   boost::shared_ptr<CreateField> create_field = allocate_component<CreateField>("create_field");

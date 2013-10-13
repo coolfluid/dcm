@@ -16,6 +16,7 @@ mesh_generator.execute()
 load_balance = mesh_generator.create_component("load_balancer","cf3.mesh.actions.LoadBalance")
 load_balance.options().set("mesh",mesh)
 load_balance.execute()
+model.build_faces();
 
 ### Add PDE
 euler = model.add_pde(name='euler',type='cf3.dcm.equations.euler.Euler1D',shape_function='cf3.dcm.core.LegendreGaussEndP2')

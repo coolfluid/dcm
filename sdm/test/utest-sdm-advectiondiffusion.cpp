@@ -106,7 +106,8 @@ BOOST_AUTO_TEST_CASE( test_advection_1d )
   mesh_generator->options().set("lengths",std::vector<Real>(dim,10));
   mesh_generator->execute();
   allocate_component<LoadBalance>("repartitioner")->transform(mesh);
-  
+  model->build_faces();
+
   // ---------------------------------------------------------------------------------------
   //      CREATE PHYSICS
   // ---------------------------------------------------------------------------------------
@@ -187,7 +188,8 @@ BOOST_AUTO_TEST_CASE( test_diffusion_1d )
   mesh_generator->options().set("lengths",std::vector<Real>(dim,10));
   mesh_generator->execute();
   allocate_component<LoadBalance>("repartitioner")->transform(mesh);
-  
+  model->build_faces();
+
   // ---------------------------------------------------------------------------------------
   //      CREATE PHYSICS
   // ---------------------------------------------------------------------------------------
@@ -268,6 +270,7 @@ BOOST_AUTO_TEST_CASE( test_advection_2d )
   mesh_generator->options().set("lengths",std::vector<Real>(dim,10));
   mesh_generator->execute();
   allocate_component<LoadBalance>("repartitioner")->transform(mesh);
+  model->build_faces();
 
   // ---------------------------------------------------------------------------------------
   //      CREATE PHYSICS
@@ -354,6 +357,7 @@ BOOST_AUTO_TEST_CASE( test_diffusion_2d )
   mesh_generator->options().set("lengths",std::vector<Real>(dim,10));
   mesh_generator->execute();
   allocate_component<LoadBalance>("repartitioner")->transform(mesh);
+  model->build_faces();
 
   // ---------------------------------------------------------------------------------------
   //      CREATE PHYSICS

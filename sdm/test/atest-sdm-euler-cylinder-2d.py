@@ -9,6 +9,7 @@ model   = cf.root.create_component('cylinder_2d','cf3.dcm.Model');
 mesh = model.domain.load_mesh(file = cf.URI('../../../resources/cylinder-quad-p2-32x8.msh'), name = 'cylinder2d');
 # mesh = model.domain.load_mesh(file = cf.URI('../../../resources/cylinder-quad-p2-64x16.msh'), name = 'cylinder2d');
 # mesh = model.domain.load_mesh(file = cf.URI('../../../resources/cylinder-quad-p2-128x32.msh'), name = 'cylinder2d');
+model.build_faces();
 
 ### Compute some physics variables
 gamma = 1.4

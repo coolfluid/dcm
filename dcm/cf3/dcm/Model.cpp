@@ -94,6 +94,12 @@ Model::Model ( const std::string& name  ) :
       .connect   ( boost::bind ( &Model::signal_create_space,    this, _1 ) )
       .signature ( boost::bind ( &Model::signature_create_space, this, _1 ) );
 
+  regist_signal( "build_faces" )
+      .description( "Build faces in all meshes in the domain")
+      .pretty_name("Build faces")
+      .connect   ( boost::bind ( &Model::signal_build_faces,    this, _1 ) )
+      .signature ( boost::bind ( &Model::signature_build_faces, this, _1 ) );
+
   regist_signal ( "add_solver" )
       .description( "Add solver to solve given PDEs" )
       .pretty_name("Add Solver" )
@@ -132,18 +138,17 @@ Handle<mesh::Dictionary> Model::create_space(const std::string& name, const std:
   if (find_components<Mesh>(*m_domain).size() == 0)
     throw SetupError(FromHere(), "Could not create solution_space because no meshes were found in "+m_domain->uri().string());
 
-  boost_foreach(Mesh& mesh, find_components<Mesh>(*m_domain) )
-  {
-    if( ! mesh.has_tag("built_faces") )
-      build_faces(mesh);
-  }
-
   /// @todo Support dictionary for more meshes.
   ///       This involves changing the element-finder configuration for interpolation, as it is searched for a parent of the dictionary,
   ///       to be a mesh always.
   if (find_components<Mesh>(*m_domain).size() > 1)
     throw NotImplemented(FromHere(),"Multiple mesh not supported yet");
   Handle<Mesh> mesh = find_component_ptr<Mesh>(*m_domain);
+
+  Handle<Component> found;
+  if (found = mesh->access_component(name))
+    return found->handle<Dictionary>();
+
   Handle<Dictionary> dict = mesh->create_component<DiscontinuousDictionary>(name);
 
   std::string space_lib_name = shape_function;
@@ -163,6 +168,7 @@ Handle<mesh::Dictionary> Model::create_space(const std::string& name, const std:
       entities.create_space(space_lib_name+"."+entities.element_type().shape_name(),*dict);
     }
   }
+  dict->properties().add("space_lib",space_lib_name);
   dict->build();
 
   boost_foreach(Mesh& mesh, find_components<Mesh>(*m_domain) )
@@ -174,6 +180,20 @@ Handle<mesh::Dictionary> Model::create_space(const std::string& name, const std:
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+
+void Model::build_faces( )
+{
+  if (find_components<Mesh>(*m_domain).size() == 0)
+    throw SetupError(FromHere(), "Could not create solution_space because no meshes were found in "+m_domain->uri().string());
+
+  boost_foreach(Mesh& mesh, find_components<Mesh>(*m_domain) )
+  {
+    {
+      CFinfo << "Building faces for mesh " << mesh.uri() << CFendl;
+      build_faces(mesh);
+    }
+  }
+}
 
 void Model::build_faces(Mesh& mesh)
 {
@@ -196,6 +216,11 @@ Handle<mesh::Dictionary> Model::create_bdry_space(const std::string& name, const
   if (find_components<Mesh>(*m_domain).size() > 1)
     throw NotImplemented(FromHere(),"Multiple mesh not supported yet");
   Handle<Mesh> mesh = find_component_ptr<Mesh>(*m_domain);
+
+  Handle<Component> found;
+  if (found = mesh->access_component(name))
+    return found->handle<Dictionary>();
+
   Handle<Dictionary> dict = mesh->create_component<DiscontinuousDictionary>(name);
 
   std::string space_lib_name = shape_function;
@@ -282,6 +307,19 @@ void Model::signature_create_space( common::SignalArgs& args )
 
 ////////////////////////////////////////////////////////////////////////////////
 
+void Model::signal_build_faces( common::SignalArgs& args)
+{
+  build_faces();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+void Model::signature_build_faces( common::SignalArgs& args )
+{
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 void Model::signal_add_solver( common::SignalArgs& args)
 {
   common::XML::SignalOptions opts(args);
@@ -354,7 +392,6 @@ Handle<solver::PDE> Model::add_pde(const std::string& name, const std::string& t
 {
   Handle<Dictionary> solution_space      = create_space     (name,shape_function,regions);
   Handle<Dictionary> bdry_solution_space = create_bdry_space(name+"_bdry",shape_function,regions);
-
   Handle<solver::PDE> pde = create_component(name,type)->handle<solver::PDE>();
   pde->mark_basic();
   pde->options().set("fields",solution_space);

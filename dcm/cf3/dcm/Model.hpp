@@ -60,6 +60,8 @@ public: // functions
 
   const Handle<solver::TimeStepping>& time_stepping() { return m_time_stepping; }
 
+  void build_faces();
+
 public: // signals
 
   void signal_add_pde( common::SignalArgs& args);
@@ -70,6 +72,9 @@ public: // signals
 
   void signal_create_space( common::SignalArgs& args);
   void signature_create_space( common::SignalArgs& args);
+
+  void signal_build_faces( common::SignalArgs& args);
+  void signature_build_faces( common::SignalArgs& args);
 
 //  void signal_add_probe(common::SignalArgs& args);
 //  void signature_add_probe(common::SignalArgs& args);

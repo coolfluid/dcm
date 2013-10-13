@@ -100,6 +100,7 @@ BOOST_AUTO_TEST_CASE( compute_1d )
   mesh_generator->execute();
   allocate_component<LoadBalance>("repartitioner")->transform(mesh);
 
+  model->build_faces();
   Handle<Dictionary> solution_space = model->create_space("solution_space","cf3.dcm.core.LegendreGaussEndP3", std::vector< Handle<Component> >(1,mesh->handle()));
 
   // Create and setup physics
@@ -148,7 +149,7 @@ BOOST_AUTO_TEST_CASE( compute_2d )
   mesh_generator->options().set("lengths",std::vector<Real>(dim,3.));
   mesh_generator->execute();
   allocate_component<LoadBalance>("repartitioner")->transform(mesh);
-
+  model->build_faces();
   Handle<Dictionary> solution_space = model->create_space("solution_space","cf3.dcm.core.LegendreGaussEndP2", std::vector< Handle<Component> >(1,mesh->handle()));
 
   // Create and setup physics
@@ -201,6 +202,7 @@ BOOST_AUTO_TEST_CASE( compute_3d )
   mesh_generator->execute();
   allocate_component<LoadBalance>("repartitioner")->transform(mesh);
 
+  model->build_faces();
   Handle<Dictionary> solution_space = model->create_space("solution_space","cf3.dcm.core.LegendreGaussEndP3", std::vector< Handle<Component> >(1,mesh->handle()));
 
   // Create and setup physics
