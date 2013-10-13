@@ -111,7 +111,6 @@ public:
       m_sol_pt_J[sol_pt] = m_metrics.m_cells->element_type().jacobian(m_metrics.m_sf->sol_pts().row(sol_pt), m_cell_coords);
       m_sol_pt_Jinv[sol_pt] = m_sol_pt_J[sol_pt].inverse();
       m_sol_pt_Jdet[sol_pt] = m_sol_pt_J[sol_pt].determinant();
-      //m_sol_pt_Jdet[sol_pt] = m_metrics.m_cells->element_type().jacobian_determinant(m_metrics.m_sf->sol_pts().row(sol_pt), m_cell_coords);
 
       // Compute coordinates
       for (Uint d=0; d<NDIM; ++d)
@@ -137,7 +136,8 @@ public:
   const Real&
     sol_pt_Jdet(const Uint sol_pt) const;
 
-  const ColVector_NDIM& flx_pt_coords(const Uint flx_pt) const;
+  const ColVector_NDIM&
+    flx_pt_coords(const Uint flx_pt) const;
 
   const Matrix_NDIMxNDIM&
     flx_pt_J(const Uint flx_pt) const;
@@ -255,18 +255,6 @@ private:
   Handle<mesh::Space const> m_space;
   Handle<dcm::core::ShapeFunction const> m_sf;
   Handle<mesh::Field const> m_space_coords;
-
-  std::vector< ColVector_NDIM >   m_sol_pt_coords;
-  std::vector< Matrix_NDIMxNDIM > m_sol_pt_J;
-  std::vector< Matrix_NDIMxNDIM > m_sol_pt_Jinv;
-  std::vector< Real >             m_sol_pt_Jdet;
-  
-  std::vector< ColVector_NDIM >   m_flx_pt_coords;
-  std::vector< Matrix_NDIMxNDIM > m_flx_pt_J;
-  std::vector< Matrix_NDIMxNDIM > m_flx_pt_Jinv;
-  std::vector< Real >             m_flx_pt_Jdet;
-  std::vector< ColVector_NDIM >   m_flx_pt_unit_normal;
-  std::vector< Real >             m_flx_pt_Jvec_abs;
 
   mesh::ReconstructPoint                                m_set_zero;
   std::vector< mesh::ReconstructPoint >                 m_copy_pt;

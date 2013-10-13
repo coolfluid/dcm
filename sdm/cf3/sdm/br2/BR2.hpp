@@ -190,7 +190,6 @@ bool BR2<TERM>::loop_cells(const Handle<mesh::Entities const>& cells)
     m_metrics = const_cast<mesh::Space*>(m_space.get())->create_component< dcm::core::Metrics<NDIM> >("metrics");
     m_metrics->setup_for_space(m_space);
   }
-
   // Resize all vectors appropriately
   m_nb_sol_pts = m_sf->nb_sol_pts();
   m_nb_flx_pts = m_sf->nb_flx_pts();
@@ -234,6 +233,7 @@ bool BR2<TERM>::loop_cells(const Handle<mesh::Entities const>& cells)
   m_diffusive_flux.setZero();
   m_convective_wave_speed = 0.;
   m_diffusive_wave_speed  = 0.;
+
   return true;
 }
 ////////////////////////////////////////////////////////////////////////////////

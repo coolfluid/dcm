@@ -549,7 +549,7 @@ public: // functions
   }
   virtual void compute_flux_value(const Uint orientation, const RealVector& local_coordinate, RealRowVector& value) const
   {
-    cf3_assert(value.size()==nb_flx_pts());
+    cf3_assert_desc(uri().string()+": "+common::to_str(value.size())+"=="+common::to_str(nb_flx_pts()),value.size()==nb_flx_pts());
     value.setZero();
     switch (orientation)
     {
@@ -574,7 +574,7 @@ public: // functions
   }
   virtual void compute_flux_derivative(const Uint orientation, const RealVector& local_coordinate, RealVector& derivative) const
   {
-    cf3_assert(derivative.size()==nb_flx_pts());
+    cf3_assert_desc(uri().string()+": "+common::to_str(derivative.size())+"=="+common::to_str(nb_flx_pts()),derivative.size()==nb_flx_pts());
     derivative.setZero();
     switch (orientation)
     {

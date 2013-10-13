@@ -56,7 +56,7 @@ namespace erk {
 ///    | b1   b2   ..   bs-1    bs
 /// @endverbatim
 /// @code
-/// t = t0
+/// t0 = t
 /// U0 = U
 /// for i = 1 : s do
 ///     t := t0 + c(i)*dt
