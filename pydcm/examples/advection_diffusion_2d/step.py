@@ -11,8 +11,6 @@ sim.define( a = [1.,0.] ,  mu = .25 )
 
 # Choose the space discretization order
 sim.create_space_discretization( order = 5 )
-print sim.pde.a
-print sim.pde.mu
 
 # Add boundary conditions
 sim.add_bc( 'inlet',  'Dirichlet',     ['left'],         Q = 5.    )
