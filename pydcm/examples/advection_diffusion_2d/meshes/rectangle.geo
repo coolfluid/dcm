@@ -1,0 +1,15 @@
+Point(1) = {-10, -20, 0, 1.0};
+Point(2) = {100, -20, 0, 1.0};
+Point(3) = {100,  20, 0, 1.0};
+Point(4) = {-10,  20, 0, 1.0};
+Line(1) = {1, 2};
+Line(2) = {2, 3};
+Line(3) = {3, 4};
+Line(4) = {4, 1};
+Line Loop(5) = {1, 2, 3, 4};
+Ruled Surface(6) = {5};
+Physical Line("left") = {4};
+Physical Line("bottom") = {1};
+Physical Line("right") = {2};
+Physical Line("top") = {3};
+Physical Surface("interior") = {6};
