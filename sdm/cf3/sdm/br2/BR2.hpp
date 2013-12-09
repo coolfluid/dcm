@@ -34,6 +34,7 @@ class sdm_br2_API BR2 : public solver::TermComputer {
 
 public: // types
 
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   enum {NDIM  = TERM::NDIM};
   enum {NEQS  = TERM::NEQS};
   enum {NVAR  = TERM::NVAR};
@@ -467,7 +468,6 @@ void BR2<TERM>::compute_term(const Uint elem_idx, std::vector<RealVector>& term,
     //                    KSI           ETA         ZTA
     //   - convective:  ax / dx       ay / dy     az / dz
     //   - diffusive:   mu / dx^2     mu / dy^2   mu / dz^2
-
     boost_foreach (Uint flx_pt, m_sf->interior_flx_pts())
     {
       m_term->compute_phys_data( /*in*/  m_element_metrics->flx_pt_coords(flx_pt),
@@ -649,32 +649,32 @@ void BR2<TERM>::compute_term(const Uint elem_idx, std::vector<RealVector>& term,
 
     for (Uint sol_pt=0; sol_pt<m_nb_sol_pts; ++sol_pt)
     {
+      m_sol_pt_vars[sol_pt].setZero();
       if (TERM::NGRAD)
       {
-        m_sol_pt_vars[sol_pt].setZero();
         m_sol_pt_gradvars[sol_pt].setZero();
         m_sol_pt_gradvars_grad[sol_pt].setZero();
-
-        for (Uint d=0; d<NDIM; ++d)
+      }
+      for (Uint d=0; d<NDIM; ++d)
+      {
+        boost_foreach( Uint flx_pt, m_metrics->line_interpolation_from_flx_pts_to_sol_pt(sol_pt,d).used_points() )
         {
-          boost_foreach( Uint flx_pt, m_metrics->line_interpolation_from_flx_pts_to_sol_pt(sol_pt,d).used_points() )
+          const Real C     = m_metrics->line_interpolation_from_flx_pts_to_sol_pt(sol_pt,d).coeff(flx_pt);
+          const Real C_avg = C / static_cast<Real>(NDIM);
+          for (Uint v=0; v<NVAR; ++v)
           {
-            const Real C     = m_metrics->line_interpolation_from_flx_pts_to_sol_pt(sol_pt,d).coeff(flx_pt);
-            const Real C_avg = C / NDIM;
-            for (Uint v=0; v<NVAR; ++v)
-            {
-              m_sol_pt_vars[sol_pt][v] += m_avg_flx_pt_vars[flx_pt][v] * C_avg;
-            }
-            for (Uint v=0; v<NGRAD; ++v)
-            {
-              m_sol_pt_gradvars[sol_pt][v]        += C_avg * m_avg_flx_pt_gradvars[flx_pt][v];
-              m_sol_pt_gradvars_grad[sol_pt](d,v) += C     * m_avg_flx_pt_gradvars_grad[flx_pt](d,v);
-            }
+            m_sol_pt_vars[sol_pt][v] += m_avg_flx_pt_vars[flx_pt][v] * C_avg;
+          }
+          for (Uint v=0; v<NGRAD; ++v)
+          {
+            m_sol_pt_gradvars[sol_pt][v]        += C_avg * m_avg_flx_pt_gradvars[flx_pt][v];
+            m_sol_pt_gradvars_grad[sol_pt](d,v) += C     * m_avg_flx_pt_gradvars_grad[flx_pt](d,v);
           }
         }
-        // Transform interpolated gradient in solution points to X,Y,Z coordinates
-        m_sol_pt_gradvars_grad[sol_pt] = m_element_metrics->sol_pt_Jinv(sol_pt) * m_sol_pt_gradvars_grad[sol_pt];
       }
+      // Transform interpolated gradient in solution points to X,Y,Z coordinates
+      m_sol_pt_gradvars_grad[sol_pt] = m_element_metrics->sol_pt_Jinv(sol_pt) * m_sol_pt_gradvars_grad[sol_pt];
+
       m_term->compute_phys_data( /*in*/  m_element_metrics->sol_pt_coords(sol_pt),
                                  /*in*/  m_sol_pt_vars[sol_pt],
                                  /*in*/  m_sol_pt_gradvars[sol_pt],
