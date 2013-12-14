@@ -185,7 +185,6 @@ class DCM(object):
         self.model.tools.init_field.init_field(
           field=self.pde.solution,
           functions= [self.expression(func) for func in functions] )
-        print [(func,self.expression(func)) for func in functions]
         
     def propagate(self, **keyword_args):
         if 'end_time' in keyword_args:

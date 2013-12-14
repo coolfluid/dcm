@@ -60,6 +60,7 @@ class Definitions(object):
         return expressions_str
 
     def eval(self,var):
+        from math import sqrt, log, exp, sin, cos, tan
         for expr in self.expressions[:self.position[var]]:
             if isinstance(expr[VAL],list):
                 exec(expr[KEY]+'=[]')

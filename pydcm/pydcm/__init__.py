@@ -15,8 +15,9 @@
 
 
 # Bring specific nested scopes up
-from navierstokes          import NavierStokes
-from euler                 import Euler
 from advection_diffusion   import AdvectionDiffusion
+from euler                 import Euler
+from navierstokes          import NavierStokes
+from lineuler              import LinearizedEuler
 from case                  import save, restart
 from util                  import log
