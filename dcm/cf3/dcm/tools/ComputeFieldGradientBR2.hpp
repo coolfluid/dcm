@@ -250,6 +250,7 @@ void ComputeFieldGradientBR2::compute_gradient()
 
             if ( connected->is_bdry_face()[face_nb] )  // Gradient is copied from inside
             {
+#if 0
               mesh::Connectivity::ConstRow nodes = neighbour_space[face_nb]->connectivity()[neighbour_elem_idx[face_nb]];
 
               const mesh::ReconstructPoint& interpolation = metrics->copy_pt(f); // <------ double check!!!
@@ -265,6 +266,12 @@ void ComputeFieldGradientBR2::compute_gradient()
 
               // use inside gradient
               neighbour_flx_pt_grad[flx_pt] = flx_pt_grad[flx_pt];
+#endif
+              // The above should be OK but not if field (or space) is not defined on this face
+              // use inside gradient and flux_pt_vars
+              neighbour_flx_pt_vars[flx_pt] = flx_pt_vars[flx_pt];
+              neighbour_flx_pt_grad[flx_pt] = flx_pt_grad[flx_pt];
+
             }
             else // Gradient is computed in neighbour cell
             {
@@ -425,7 +432,7 @@ void ComputeFieldGradientBR2::compute_gradient()
           {
             for (Uint v=0; v<nb_vars; ++v)
             {
-              m_field_gradient->array()[p][v+d*nb_vars] = grad_pt_grad[grad_pt](d,v);
+              m_field_gradient->array()[p][v*NDIM+d] = grad_pt_grad[grad_pt](d,v);
             }
           }
         }

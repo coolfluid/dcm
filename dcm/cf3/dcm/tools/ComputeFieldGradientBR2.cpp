@@ -71,7 +71,6 @@ ComputeFieldGradientBR2::ComputeFieldGradientBR2( const std::string& name )
                    "If negative, alpha = 1/(P+1) is used");
 
   options().add("BR2",true);
-
 }
 
 /////////////////////////////////////////////////////////////////////////////

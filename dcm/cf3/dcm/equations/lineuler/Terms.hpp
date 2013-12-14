@@ -11,7 +11,7 @@
 
 #include <boost/mpl/vector.hpp>
 
-#include "cf3/dcm/equations/lineuler/TermsUniform2D.hpp"
+#include "cf3/dcm/equations/lineuler/RightHandSide2D.hpp"
 #include "cf3/dcm/equations/lineuler/SourceMonopoleUniform.hpp"
 
 namespace cf3 {
@@ -20,7 +20,7 @@ namespace equations {
 namespace lineuler {
 
 typedef boost::mpl::vector<
-  TermsUniform2D,
+  RightHandSide2D,
   SourceMonopoleUniform2D,
   SourceMonopoleUniform3D
 > Terms;

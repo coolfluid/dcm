@@ -8,14 +8,14 @@ mesh = model.domain.load_mesh(file = cf.URI('../../../resources/circle-quad-p1-3
 model.build_faces();
 
 ### Add the Partial Differential Equations to solve
-lineuler = model.add_pde(name='lineuler',type='cf3.dcm.equations.lineuler.LinEulerUniform2D',
+lineuler = model.add_pde(name='lineuler',type='cf3.dcm.equations.lineuler.LinEuler2D',
     shape_function='cf3.dcm.core.LegendreGaussEndP1')
 lineuler.gamma = 1.4
-lineuler.U0 = [0,0]
-lineuler.rho0 = 1
-lineuler.p0 = 1
+rho0 = 1.
+U0=[0.,0.]
+p0=1.
 
-lineuler.add_term( name='rhs', type='cf3.sdm.br2.lineuler_TermsUniform2D' )
+lineuler.add_term( name='rhs', type='cf3.sdm.br2.lineuler_RightHandSide2D' )
 
 ### Add BC
 lineuler.add_bc( name='farfield',
@@ -30,6 +30,14 @@ model.tools.init_field.init_field(
     '0',
     '0',
     '1.4 * 0.001*exp( -( (x)^2 + (y)^2 )/(0.05)^2 )' ] )
+
+model.tools.init_field.init_field(
+  field=lineuler.background,
+  functions=[ str(rho0), str(U0[0]), str(U0[1]), str(p0) ] )
+
+model.tools.init_field.init_field(
+  field=lineuler.bdry_background,
+  functions=[ str(rho0), str(U0[0]), str(U0[1]), str(p0) ] )
 
 ### Create the Solver for the Partial Differential Equations
 solver = model.add_solver(name='rk_solver',pde=lineuler)
@@ -55,8 +63,8 @@ solution = lineuler.fields.solution
 difference = lineuler.fields.create_field(name='difference',variables='drho[s],dU[v],dp[s]')
 for i in range(len(difference)) :
     difference[i][0] = exact_solution[i][0] - solution[i][0]
-    difference[i][1] = exact_solution[i][1] - solution[i][1]/lineuler.rho0
-    difference[i][2] = exact_solution[i][2] - solution[i][2]/lineuler.rho0
+    difference[i][1] = exact_solution[i][1] - solution[i][1]/rho0
+    difference[i][2] = exact_solution[i][2] - solution[i][2]/rho0
     difference[i][3] = exact_solution[i][3] - solution[i][3]
 
 compute_norm = model.tools.create_component('compute_norm','cf3.solver.ComputeLNorm')

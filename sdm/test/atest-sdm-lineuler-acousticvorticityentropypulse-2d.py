@@ -1,5 +1,5 @@
 import coolfluid as cf
-
+import math
 ### Create new model specialized for SD
 model   = cf.root.create_component('accousticpulse_2d','cf3.dcm.Model');
 
@@ -8,14 +8,14 @@ mesh = model.domain.load_mesh(file = cf.URI('../../../resources/square100-quad-p
 model.build_faces();
 
 ### Add the Partial Differential Equations to solve
-lineuler = model.add_pde(name='lineuler',type='cf3.dcm.equations.lineuler.LinEulerUniform2D',
+lineuler = model.add_pde(name='lineuler',type='cf3.dcm.equations.lineuler.LinEuler2D',
     shape_function='cf3.dcm.core.LegendreGaussEndP3')
 lineuler.gamma = 1.
-lineuler.U0 = [0.5,0]
-lineuler.rho0 = 1
-lineuler.p0 = 1
+U0 = [0.5,0]
+rho0 = 1
+p0 = 1
 
-lineuler.add_term( name='rhs', type='cf3.sdm.br2.lineuler_TermsUniform2D' )
+lineuler.add_term( name='rhs', type='cf3.sdm.br2.lineuler_RightHandSide2D' )
 
 ### Add BC
 lineuler.add_bc( name='farfield',
@@ -33,6 +33,13 @@ model.tools.init_field.init_field(
     ' 1.*0.04*y      *exp( -log(2.)*((x-67.)^2+y^2)/25. )',
     '-1.*0.04*(x-67.)*exp( -log(2.)*((x-67.)^2+y^2)/25. )',
     '1.* exp( -log(2.)*((x)^2+y^2)/9. )' ] )
+model.tools.init_field.init_field(
+  field=lineuler.background,
+  functions=[ str(rho0), str(U0[0]), str(U0[1]), str(p0) ] )
+
+model.tools.init_field.init_field(
+  field=lineuler.bdry_background,
+  functions=[ str(rho0), str(U0[0]), str(U0[1]), str(p0) ] )
 
 ### Create the Solver for the Partial Differential Equations
 solver = model.add_solver(pde=lineuler,name='optim_erk',solver='cf3.sdm.solver.optim_erkls.ERK_18_4')
@@ -70,7 +77,7 @@ while not model.time_stepping.properties.finished :
 compute_char = model.tools.create_component('compute_characteristics','cf3.dcm.equations.lineuler.ComputeCharacteristicVariablesUniform2D')
 compute_char.options().set('normal',[1.,0.])
 compute_char.options().set('field',lineuler.solution)
-compute_char.options().set('c0',1.)
+compute_char.options().set('c0',math.sqrt(lineuler.gamma*p0/rho0))
 compute_char.execute()
 
 ########################

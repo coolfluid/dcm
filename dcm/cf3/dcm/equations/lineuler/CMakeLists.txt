@@ -11,12 +11,12 @@ list( APPEND coolfluid_dcm_equations_lineuler_files
   ComputeCharacteristicVariablesUniform2D.cpp
   LibLinEuler.hpp
   LibLinEuler.cpp
-  LinEulerUniform2D.hpp
-  LinEulerUniform2D.cpp
+  LinEuler2D.hpp
+  LinEuler2D.cpp
   SourceMonopoleUniform.hpp
   SourceMonopoleUniform.cpp
-  TermsUniform2D.hpp
-  TermsUniform2D.cpp
+  RightHandSide2D.hpp
+  RightHandSide2D.cpp
   InitAcousticPulse.hpp
   InitAcousticPulse.cpp
   InitAcousticVorticityPulse.hpp
@@ -35,8 +35,6 @@ coolfluid_mark_not_orphan(
   Convection3D.cpp
   FixMeanFlowBoundaryLayer.hpp
   FixMeanFlowBoundaryLayer.cpp
-  LinEuler2D.hpp
-  LinEuler2D.cpp
   SourceMeanflow2D.hpp
   SourceMeanflow2D.cpp
   SourceDipole2D.hpp

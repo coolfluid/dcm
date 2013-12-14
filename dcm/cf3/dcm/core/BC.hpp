@@ -7,6 +7,8 @@
 #ifndef cf3_dcm_core_BC_hpp
 #define cf3_dcm_core_BC_hpp
 
+#include "cf3/physics/MatrixTypes.hpp"
+
 #include <cf3/common/Log.hpp>
 
 #include "cf3/math/Consts.hpp"
@@ -25,7 +27,6 @@
 #include "cf3/dcm/core/Reconstructions.hpp"
 #include "cf3/dcm/core/Metrics.hpp"
 
-#include "cf3/physics/MatrixTypes.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -37,7 +38,6 @@ namespace core {
 
 template <Uint NB_DIM, Uint NB_EQS>
 class dcm_core_API BC : public cf3::solver::BC {
-
 public: // types
 
   enum {NDIM  = NB_DIM};
@@ -100,10 +100,12 @@ protected:
   Uint m_cell_face_nb;
   Uint m_nb_face_pts;
   
-  std::vector<RowVector_NEQS> m_boundary_solution;
-  std::vector<Matrix_NDIMxNEQS> m_boundary_solution_gradient;
+  std::vector<RowVector_NEQS,Eigen::aligned_allocator<RowVector_NEQS> > m_boundary_solution;
+  std::vector<Matrix_NDIMxNEQS,Eigen::aligned_allocator<Matrix_NDIMxNEQS> > m_boundary_solution_gradient;
 
   std::vector< std::vector<Uint> >  m_face_pts;
+public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
 /////////////////////////////////////////////////////////////////////////////////////
@@ -123,7 +125,7 @@ void BC<NB_DIM,NB_EQS>::execute()
   {
     if ( is_not_null(region) )
     {      
-      boost_foreach( const mesh::Entities& faces, common::find_components_recursively<mesh::Entities>(*region) )
+      boost_foreach( const mesh::Entities& faces, common::find_components_recursively< mesh::Entities >(*region) )
       {
         if ( loop_faces( faces.handle<mesh::Entities>() ) )
         {

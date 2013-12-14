@@ -152,19 +152,12 @@ Handle<mesh::Dictionary> Model::create_space(const std::string& name, const std:
   Handle<Dictionary> dict = mesh->create_component<DiscontinuousDictionary>(name);
 
   std::string space_lib_name = shape_function;
-  CFinfo << "Creating Disontinuous space " << dict->uri() << " ("<<space_lib_name<<") for entities" << CFendl;
+  CFinfo << "Creating Disontinuous space " << dict->uri() << " ("<<space_lib_name<<") for cells" << CFendl;
   boost_foreach(const Handle<Component>& comp, regions)
   {
-    boost_foreach(const Entities& entities, find_components_recursively<Entities>( *comp ) )
+    boost_foreach(Cells& entities, find_components_recursively<Cells>( *comp ) )
     {
       CFinfo << "    -  " <<  entities.uri() << CFendl;
-    }
-  }
-
-  boost_foreach(const Handle<Component>& comp, regions)
-  {
-    boost_foreach(Entities& entities, find_components_recursively<Entities>( *comp ) )
-    {
       entities.create_space(space_lib_name+"."+entities.element_type().shape_name(),*dict);
     }
   }
@@ -227,16 +220,9 @@ Handle<mesh::Dictionary> Model::create_bdry_space(const std::string& name, const
   CFinfo << "Creating Disontinuous boundary space " << dict->uri() << " ("<<space_lib_name<<") for entities" << CFendl;
   boost_foreach(const Handle<Component>& comp, regions)
   {
-    boost_foreach(const Entities& entities, find_components_recursively<Faces>( *comp ) )
-    {
-      CFinfo << "    -  " <<  entities.uri() << CFendl;
-    }
-  }
-
-  boost_foreach(const Handle<Component>& comp, regions)
-  {
     boost_foreach(Faces& entities, find_components_recursively<Faces>( *comp ) )
     {
+      CFinfo << "    -  " <<  entities.uri() << CFendl;
       entities.create_space(space_lib_name+"."+entities.element_type().shape_name(),*dict);
     }
   }

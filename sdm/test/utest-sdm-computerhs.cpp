@@ -102,6 +102,7 @@ BOOST_AUTO_TEST_CASE( compute_1d )
 
   model->build_faces();
   Handle<Dictionary> solution_space = model->create_space("solution_space","cf3.dcm.core.LegendreGaussEndP3", std::vector< Handle<Component> >(1,mesh->handle()));
+  Handle<Dictionary> solution_space_bdry = model->create_bdry_space("solution_space_bdry","cf3.dcm.core.LegendreGaussEndP3", std::vector< Handle<Component> >(1,mesh->handle()));
 
   // Create and setup physics
   typedef sdm::test::Term<dim>  TERM;
@@ -113,7 +114,7 @@ BOOST_AUTO_TEST_CASE( compute_1d )
   Handle< solver::TermComputer > compute_term  = compute_rhs->create_component< TERM_COMPUTER >("term_computer")->handle<solver::TermComputer>();
   compute_term->options().set("alpha",0.);
   compute_term->configure_option_recursively("fields",solution_space);
-  compute_term->configure_option_recursively("bdry_fields",solution_space);
+  compute_term->configure_option_recursively("bdry_fields",solution_space_bdry);
 
   // Solve
   mesh::Field& rhs         = solution_space->create_field("rhs",dim);
@@ -151,6 +152,7 @@ BOOST_AUTO_TEST_CASE( compute_2d )
   allocate_component<LoadBalance>("repartitioner")->transform(mesh);
   model->build_faces();
   Handle<Dictionary> solution_space = model->create_space("solution_space","cf3.dcm.core.LegendreGaussEndP2", std::vector< Handle<Component> >(1,mesh->handle()));
+  Handle<Dictionary> solution_space_bdry = model->create_bdry_space("solution_space_bdry","cf3.dcm.core.LegendreGaussEndP3", std::vector< Handle<Component> >(1,mesh->handle()));
 
   // Create and setup physics
   typedef sdm::test::Term<dim>  TERM;
@@ -161,7 +163,7 @@ BOOST_AUTO_TEST_CASE( compute_2d )
   typedef BR2< TERM >  TERM_COMPUTER;
   Handle< solver::TermComputer > compute_term  = compute_rhs->create_component< TERM_COMPUTER >("term_computer")->handle<solver::TermComputer>();
   compute_term->configure_option_recursively("fields",solution_space);
-  compute_term->configure_option_recursively("bdry_fields",solution_space);
+  compute_term->configure_option_recursively("bdry_fields",solution_space_bdry);
 
   // Solve
   mesh::Field& rhs         = solution_space->create_field("rhs",dim);
@@ -204,6 +206,7 @@ BOOST_AUTO_TEST_CASE( compute_3d )
 
   model->build_faces();
   Handle<Dictionary> solution_space = model->create_space("solution_space","cf3.dcm.core.LegendreGaussEndP3", std::vector< Handle<Component> >(1,mesh->handle()));
+  Handle<Dictionary> solution_space_bdry = model->create_bdry_space("solution_space_bdry","cf3.dcm.core.LegendreGaussEndP3", std::vector< Handle<Component> >(1,mesh->handle()));
 
   // Create and setup physics
   typedef sdm::test::Term<dim>  TERM;
@@ -214,7 +217,7 @@ BOOST_AUTO_TEST_CASE( compute_3d )
   typedef BR2< TERM >  TERM_COMPUTER;
   Handle< solver::TermComputer > compute_term  = compute_rhs->create_component< TERM_COMPUTER >("term_computer")->handle<solver::TermComputer>();
   compute_term->configure_option_recursively("fields",solution_space);
-  compute_term->configure_option_recursively("bdry_fields",solution_space);
+  compute_term->configure_option_recursively("bdry_fields",solution_space_bdry);
 
   // Solve
   mesh::Field& rhs         = solution_space->create_field("rhs",dim);

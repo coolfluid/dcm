@@ -4,8 +4,8 @@
 // GNU Lesser General Public License version 3 (LGPLv3).
 // See doc/lgpl.txt and doc/gpl.txt for the license text.
 
-#ifndef cf3_dcm_equations_lineuler_TermsUniform2D_hpp
-#define cf3_dcm_equations_lineuler_TermsUniform2D_hpp
+#ifndef cf3_dcm_equations_lineuler_RightHandSide2D_hpp
+#define cf3_dcm_equations_lineuler_RightHandSide2D_hpp
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -21,21 +21,23 @@ namespace lineuler {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class dcm_equations_lineuler_API TermsUniform2D : public solver::TermBase< 2 /*dim*/, 4 /*eqs*/, 4 /*vars*/, 0/*grads*/ >
+class dcm_equations_lineuler_API RightHandSide2D : public solver::TermBase< 2 /*dim*/, 4 /*eqs*/, 16 /*vars*/, 0/*grads*/ >
 {
 public: 
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   /// @brief Constructor
-  TermsUniform2D( const std::string& name );
+  RightHandSide2D( const std::string& name );
   
   /// @brief Destructor
-  virtual ~TermsUniform2D() {}
+  virtual ~RightHandSide2D() {}
   
-  static std::string type_name() { return "TermsUniform2D"; }
+  static std::string type_name() { return "RightHandSide2D"; }
   
 public: // types
 
   enum { ENABLE_CONVECTION = true };
+  enum { ENABLE_SOURCE     = true };
 
   typedef physics::lineuler::lineuler2d::Data DATA;
 
@@ -92,12 +94,27 @@ public: // Flux computations
     physics::lineuler::lineuler2d::compute_cir_flux(left,right,normal,flux,wave_speed);
   }
 
+  /// @brief Source term, coming from inhomogeneous mean flow
+  ///
+  /// The source term H is defined as
+  ///
+  ///      [                                 0                                  ]
+  ///  H = [     (rho' u0 + rho0 u') du0/dx  +  (rho' v0 + rho0 v') du0/dy      ]
+  ///      [     (rho' u0 + rho0 u') dv0/dx  +  (rho' v0 + rho0 v') dv0/dy      ]
+  ///      [ (gamma-1) p' (du0/dx + dv0/dy) - (gamma-1) (u' dp0/dx + v' dp0/dy) ]
+  ///
+  /// with u0 = U0[XX]
+  /// with v0 = U0[YY]
+  /// with u' = U[XX] - U0[XX]
+  /// with v' = U[YY] - U0[YY]
+  void compute_source( const DATA& p, RowVector_NEQS& source );
+
 private: // configuration
 
   Real m_gamma;
-  std::vector<Real> m_U0;
-  Real m_rho0;
-  Real m_p0;
+  Handle<mesh::Field> m_background;
+  Handle<mesh::Field> m_background_gradient;
+  Handle<mesh::Field> m_bdry_background;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -109,4 +126,4 @@ private: // configuration
 
 ////////////////////////////////////////////////////////////////////////////////
 
-#endif // cf3_dcm_equations_lineuler_TermsUniform2D_hpp
+#endif // cf3_dcm_equations_lineuler_RightHandSide2D_hpp
