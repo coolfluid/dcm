@@ -40,8 +40,12 @@ public: // types
   enum {NVAR  = TERM::NVAR};
   enum {NGRAD = TERM::NGRAD};
 
-  typedef physics::MatrixTypes<NDIM,NEQS,NVAR,NGRAD> Types;
-
+  typedef physics::MatrixTypes<NDIM,NEQS,NVAR,NGRAD> MatrixTypes;
+  typedef typename MatrixTypes::RowVector_NEQS RowVector_NEQS;
+  typedef typename MatrixTypes::RowVector_NVAR RowVector_NVAR;
+  typedef typename MatrixTypes::ColVector_NDIM ColVector_NDIM;
+  typedef typename MatrixTypes::RowVector_NGRAD RowVector_NGRAD;
+  typedef typename MatrixTypes::Matrix_NDIMxNGRAD Matrix_NDIMxNGRAD;
   typedef typename TERM::DATA              PhysData;
 
 public: // functions
@@ -75,40 +79,40 @@ private:
   Uint m_nb_faces;
   Uint m_nb_sol_pts;
   Uint m_nb_flx_pts;
-  std::vector< typename Types::RowVector_NEQS > m_flx_pt_flux;
+  std::vector< RowVector_NEQS > m_flx_pt_flux;
   std::vector<Real> m_flx_pt_wave_speed;
-  std::vector< typename Types::ColVector_NDIM > m_sol_pt_wave_speed_vector;
+  std::vector< ColVector_NDIM > m_sol_pt_wave_speed_vector;
 
   PhysData m_phys_data;
   PhysData m_neighbor_phys_data;
 
-  std::vector< typename Types::RowVector_NEQS > m_sol_pt_flux_divergence;
-  std::vector< typename Types::RowVector_NEQS > m_sol_pt_source;
+  std::vector< RowVector_NEQS > m_sol_pt_flux_divergence;
+  std::vector< RowVector_NEQS > m_sol_pt_source;
 
-  std::vector< typename Types::RowVector_NVAR > m_sol_pt_vars;
-  std::vector< typename Types::RowVector_NVAR > m_flx_pt_vars;
-  std::vector< typename Types::RowVector_NVAR > m_avg_flx_pt_vars;
+  std::vector< RowVector_NVAR > m_sol_pt_vars;
+  std::vector< RowVector_NVAR > m_flx_pt_vars;
+  std::vector< RowVector_NVAR > m_avg_flx_pt_vars;
 
-  std::vector< typename Types::RowVector_NGRAD > m_sol_pt_gradvars;
-  std::vector< typename Types::RowVector_NGRAD > m_flx_pt_gradvars;
-  std::vector< typename Types::RowVector_NGRAD > m_avg_flx_pt_gradvars;
+  std::vector< RowVector_NGRAD > m_sol_pt_gradvars;
+  std::vector< RowVector_NGRAD > m_flx_pt_gradvars;
+  std::vector< RowVector_NGRAD > m_avg_flx_pt_gradvars;
 
-  std::vector< typename Types::Matrix_NDIMxNGRAD > m_sol_pt_gradvars_grad;
-  std::vector< typename Types::Matrix_NDIMxNGRAD > m_flx_pt_gradvars_grad;
-  std::vector< typename Types::Matrix_NDIMxNGRAD > m_avg_flx_pt_gradvars_grad;
+  std::vector< Matrix_NDIMxNGRAD > m_sol_pt_gradvars_grad;
+  std::vector< Matrix_NDIMxNGRAD > m_flx_pt_gradvars_grad;
+  std::vector< Matrix_NDIMxNGRAD > m_avg_flx_pt_gradvars_grad;
 
-  std::vector< typename Types::RowVector_NVAR > m_neighbor_flx_pt_vars;
-  std::vector< typename Types::RowVector_NGRAD > m_neighbor_flx_pt_gradvars;
-  std::vector< typename Types::Matrix_NDIMxNGRAD > m_neighbor_flx_pt_gradvars_grad;
-  std::vector< typename Types::RowVector_NGRAD > m_flx_pt_gradvars_jump;
-  std::vector< typename Types::RowVector_NGRAD > m_neighbor_flx_pt_gradvars_jump;
-  std::vector< typename Types::Matrix_NDIMxNGRAD > m_LambdaL;
-  std::vector< typename Types::Matrix_NDIMxNGRAD > m_LambdaR;
+  std::vector< RowVector_NVAR > m_neighbor_flx_pt_vars;
+  std::vector< RowVector_NGRAD > m_neighbor_flx_pt_gradvars;
+  std::vector< Matrix_NDIMxNGRAD > m_neighbor_flx_pt_gradvars_grad;
+  std::vector< RowVector_NGRAD > m_flx_pt_gradvars_jump;
+  std::vector< RowVector_NGRAD > m_neighbor_flx_pt_gradvars_jump;
+  std::vector< Matrix_NDIMxNGRAD > m_LambdaL;
+  std::vector< Matrix_NDIMxNGRAD > m_LambdaR;
 
   Real m_convective_wave_speed;
   Real m_diffusive_wave_speed;
-  typename Types::RowVector_NEQS m_convective_flux;
-  typename Types::RowVector_NEQS m_diffusive_flux;
+  RowVector_NEQS m_convective_flux;
+  RowVector_NEQS m_diffusive_flux;
 
 
   Uint m_nb_face_pts;
@@ -206,9 +210,9 @@ bool BR2<TERM>::loop_cells(const Handle<mesh::Entities const>& cells)
   m_sol_pt_vars.resize(m_nb_sol_pts);
   m_sol_pt_gradvars.resize(m_nb_sol_pts);
   m_sol_pt_gradvars_grad.resize(m_nb_sol_pts);
-  m_sol_pt_flux_divergence.resize(m_nb_sol_pts,Types::RowVector_NEQS::Zero());
+  m_sol_pt_flux_divergence.resize(m_nb_sol_pts,RowVector_NEQS::Zero());
   m_sol_pt_wave_speed_vector.resize(m_nb_sol_pts);
-  m_sol_pt_source.resize(m_nb_sol_pts,Types::RowVector_NEQS::Zero());
+  m_sol_pt_source.resize(m_nb_sol_pts,RowVector_NEQS::Zero());
 
   m_flx_pt_flux.resize(m_nb_flx_pts);
   m_flx_pt_wave_speed.resize(m_nb_flx_pts);
@@ -220,14 +224,14 @@ bool BR2<TERM>::loop_cells(const Handle<mesh::Entities const>& cells)
   m_avg_flx_pt_gradvars_grad.resize(m_nb_flx_pts);
   m_LambdaL.resize(m_nb_flx_pts);
   m_LambdaR.resize(m_nb_flx_pts);
-  m_flx_pt_gradvars_jump.resize(m_nb_flx_pts, Types::RowVector_NGRAD::Zero() );
+  m_flx_pt_gradvars_jump.resize(m_nb_flx_pts, RowVector_NGRAD::Zero() );
 
   /// @warning It is assumed here that the neighbor element has the same element type as the current element
   ///          This means this won't work for neighbor cells with different order P
   m_neighbor_flx_pt_vars.resize(m_nb_flx_pts);
   m_neighbor_flx_pt_gradvars.resize(m_nb_flx_pts);
   m_neighbor_flx_pt_gradvars_grad.resize(m_nb_flx_pts);
-  m_neighbor_flx_pt_gradvars_jump.resize(m_nb_flx_pts, Types::RowVector_NGRAD::Zero() );
+  m_neighbor_flx_pt_gradvars_jump.resize(m_nb_flx_pts, RowVector_NGRAD::Zero() );
 
 
   m_convective_flux.setZero();
@@ -386,7 +390,7 @@ void BR2<TERM>::compute_term(const Uint elem_idx, std::vector<RealVector>& term,
       for (Uint face_pt=0; face_pt<m_nb_face_pts; ++face_pt)
       {
         Uint flx_pt = m_face_pts[face_nb][face_pt];
-        typename Types::Matrix_NDIMxNGRAD& LambdaL = m_LambdaL[flx_pt];
+        Matrix_NDIMxNGRAD& LambdaL = m_LambdaL[flx_pt];
         LambdaL.setZero();
         for (Uint d=0; d<NDIM; ++d)
         {
@@ -421,7 +425,7 @@ void BR2<TERM>::compute_term(const Uint elem_idx, std::vector<RealVector>& term,
         {
           Uint flx_pt = m_face_pts[face_nb][face_pt];
           Uint neighbour_flx_pt = m_neighbor_face_pts[face_nb][face_pt];
-          typename Types::Matrix_NDIMxNGRAD& LambdaR = m_LambdaR[flx_pt];
+          Matrix_NDIMxNGRAD& LambdaR = m_LambdaR[flx_pt];
           LambdaR.setZero();
           for (Uint d=0; d<NDIM; ++d)
           {
