@@ -61,7 +61,10 @@ class Definitions(object):
 
     def eval(self,var):
         from math import sqrt, log, exp, sin, cos, tan
-        for expr in self.expressions[:self.position[var]]:
+        pos = len(self.expressions)
+        if self.has(var):
+             pos = self.position[var]
+        for expr in self.expressions[:pos]:
             if isinstance(expr[VAL],list):
                 exec(expr[KEY]+'=[]')
                 for v in expr[VAL]:
@@ -69,14 +72,17 @@ class Definitions(object):
             else:
                 exec(expr[KEY]+' = '+to_eval_str(expr[VAL]))
 
-        expr = self.expressions[self.position[var]]
-        if isinstance(expr[VAL],list):
-            exec(expr[KEY]+'=[]')
-            for v in expr[VAL]:
-                exec(expr[KEY]+'.append('+to_eval_str(v)+')')
-            return eval(expr[KEY])
+        if self.has(var):
+            expr = self.expressions[pos]
+            if isinstance(expr[VAL],list):
+                exec(expr[KEY]+'=[]')
+                for v in expr[VAL]:
+                    exec(expr[KEY]+'.append('+to_eval_str(v)+')')
+                return eval(expr[KEY])
+            else:
+                return eval(to_eval_str(expr[VAL]))
         else:
-            return eval(to_eval_str(expr[VAL]))
+            return eval(var)
             
 def log(*args):
     if cf.Core.rank() == 0:

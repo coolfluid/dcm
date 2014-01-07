@@ -1,4 +1,6 @@
 from pydcm.dcm import DCM
+from pydcm.util import log
+import math
 
 class NavierStokes(DCM):
     
@@ -33,6 +35,9 @@ class NavierStokes(DCM):
         elif (type == 'Farfield' ):
             bc_type = 'cf3.dcm.equations.euler.BCFarfield'+str(self.dimension)+'D'
             bc = self.pde.add_bc( name=name, type=bc_type, regions=region_comps )
+            bc.rho = self.value(keyword_args['rho'])
+            bc.U = [self.value(v) for v in keyword_args['U'] ]
+            bc.p = self.value(keyword_args['p'])
             
         elif (type == 'AdiabaticWall'):
             bc_type = 'cf3.dcm.equations.navierstokes.BCWall'+str(self.dimension)+'D'
@@ -81,6 +86,50 @@ class NavierStokes(DCM):
         state = super(NavierStokes,self).__getstate__()
         return state
         
+    def postprocessing(self):
+
+        density = self.pde.fields.get_child('density')
+        if( not density ):
+            density = self.pde.fields.create_field(name='density',variables='rho')
+
+        velocity = self.pde.fields.get_child('velocity')
+        if( not velocity ):
+            velocity = self.pde.fields.create_field(name='velocity',variables='U[v]')
+
+        pressure = self.pde.fields.get_child('pressure')
+        if( not pressure ):
+            pressure = self.pde.fields.create_field(name='pressure',variables='p')
+
+        temperature = self.pde.fields.get_child('temperature')
+        if( not temperature ):
+            temperature = self.pde.fields.create_field(name='temperature',variables='T')
+
+        mach = self.pde.fields.get_child('mach')
+        if( not mach ):
+            mach = self.pde.fields.create_field(name='mach',variables='M')
+
+        entropy = self.pde.fields.get_child('entropy')
+        if( not entropy ):
+            entropy = self.pde.fields.create_field(name='entropy',variables='S')
+
+        solution = self.pde.fields.solution
+
+        R = self.pde.R
+        g = self.pde.gamma
+
+        Sref = self.value('pref/rhoref**gamma')
+
+        for sol,rho,U,p,T,M,S in zip(solution,density,velocity,pressure,temperature,mach,entropy):
+            rho[0] = sol[0]
+            U2 = 0
+            for d in range(self.dimension):
+                U[d] = sol[1+d]/rho[0]
+                U2 += U[d]**2
+            p[0] = (g-1)*( sol[3] - 0.5*rho[0]*U2 );
+            T[0] = p[0]/(rho[0]*R);
+            c = math.sqrt(g*p[0]/rho[0])
+            M[0] = math.sqrt(U2)/c
+            S[0] = (p[0]/rho[0]**g-Sref)/Sref;
 
 class NavierStokesParam(object):
     
@@ -126,7 +175,3 @@ class NavierStokesParam(object):
         self.S  = self.p/(abs(self.rho)**self.gamma);
         self.T  = self.p / (self.rho * self.R)
         self.nu = self.mu/self.rho
-        
-        
-        
-        

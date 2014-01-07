@@ -31,7 +31,8 @@ def restart(case_dir,iteration='current'):
     for bc in bcs:
         simulation.add_bc(str(bc[0]),str(bc[1]),bc[2],**bc[3])
     simulation.set_time_discretization( type = simulation.solver_type )
-    simulation.set_cfl(str(simulation.cfl))
+    simulation.set_cfl(str(simulation.max_cfl)) # set the current cfl number
+    simulation.set_cfl(str(simulation.cfl)) # set the cfl function
     simulation.set_time_accurate(simulation.time_accurate)
     simulation.solver.children.history.read(URI(case_iter_dir+'/history.tsv'))
     return simulation
