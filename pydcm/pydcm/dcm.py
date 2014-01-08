@@ -47,6 +47,9 @@ class DCM(object):
         if self.dimension != 0:
             self.model.domain.options.dimension = self.dimension
 
+        if ( not os.path.exists(filename) ):
+            raise RuntimeError, "Could not load mesh because "+filename+" doesn't exist"
+
         if (os.path.splitext(filename)[1] == '.cf3mesh' ):
             reader = self.model.tools.create_component('cf3mesh_reader', 'cf3.mesh.cf3mesh.Reader')
             self.mesh = reader.read( domain=self.model.domain, file=cf.URI(filename) )            
