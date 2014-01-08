@@ -112,6 +112,15 @@ class NavierStokes(DCM):
         if( not entropy ):
             entropy = self.pde.fields.create_field(name='entropy',variables='S')
 
+        total_pressure = self.pde.fields.get_child('total_pressure')
+        if( not total_pressure ):
+            total_pressure = self.pde.fields.create_field(name='total_pressure',variables='Pt')
+
+        total_temperature = self.pde.fields.get_child('total_temperature')
+        if( not total_temperature ):
+            total_temperature = self.pde.fields.create_field(name='total_temperature',variables='Tt')
+
+
         solution = self.pde.fields.solution
 
         R = self.pde.R
@@ -119,7 +128,7 @@ class NavierStokes(DCM):
 
         Sref = self.value('pref/rhoref**gamma')
 
-        for sol,rho,U,p,T,M,S in zip(solution,density,velocity,pressure,temperature,mach,entropy):
+        for sol,rho,U,p,T,M,S,Pt,Tt in zip(solution,density,velocity,pressure,temperature,mach,entropy,total_pressure,total_temperature):
             rho[0] = sol[0]
             U2 = 0
             for d in range(self.dimension):
@@ -130,48 +139,5 @@ class NavierStokes(DCM):
             c = math.sqrt(g*p[0]/rho[0])
             M[0] = math.sqrt(U2)/c
             S[0] = (p[0]/rho[0]**g-Sref)/Sref;
-
-class NavierStokesParam(object):
-    
-    def __init__(self):
-        # gas constants for AIR
-        self.gamma = 1.4
-        self.R = 287.05
-        self.Pr = 0.72
-        self.kappa = 2.601e-2
-        self.mu = 1.806e-5
-        self.rho = 1.2041
-        self.p = 1.e5
-        self.M = 0.
-        self.u = 0.
-        self.v = 0.
-        self.w = 0.
-
-
-    def compute_conservative_state(self,state):
-        # flow parameters
-        if len(state) == 3:
-            self.rho = state[0]
-            self.u = state[1]/rho
-            self.E = state[2]/rho
-        elif len(state) == 4:
-            self.rho = state[0]
-            self.u = state[1]/rho
-            self.v = state[2]/rho
-            self.E = state[3]/rho
-        elif len(state) == 5:
-            self.rho = state[0]
-            self.u = state[1]/rho
-            self.v = state[2]/rho
-            self.w = state[3]/rho
-            self.E = state[4]/rho
-        self.U  = sqrt(self.u**2+self.v**2+self.w**2)
-        self.p  = (self.gamma-1)*(self.rho*self.E - 0.5*self.rho*self.U**2);
-        self.c  = sqrt(self.gamma*self.p/self.rho)
-        self.T  = self.p/(self.rho*self.R);
-        self.M  = self.U/self.c;
-        self.Pt = self.p+0.5*self.rho*self.U**2;
-        self.Tt = self.T*(1.+((self.gamma-1)/2))*self.M**2;
-        self.S  = self.p/(abs(self.rho)**self.gamma);
-        self.T  = self.p / (self.rho * self.R)
-        self.nu = self.mu/self.rho
+            Pt[0] = p[0]+0.5*rho[0]*U2;
+            Tt[0] = T[0]*(1.+((g-1.)/2.))*M[0]**2;
