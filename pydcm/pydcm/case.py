@@ -24,7 +24,7 @@ def restart(case_dir,iteration='current'):
     log('Restarting ',case_iter_dir)
     simulation.read_mesh(case_iter_dir+'/mesh.cf3mesh')
     simulation.create_space_discretization( order = simulation.order, riemann_solver = simulation.riemann_solver )
-    simulation.pde.time.current_time = simulation.time
+    simulation.pde.time.current_time = simulation.begin_time
     simulation.pde.time.iteration = simulation.iteration
     bcs = simulation.bcs
     simulation.bcs = []

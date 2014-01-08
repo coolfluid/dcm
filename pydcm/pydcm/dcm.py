@@ -39,6 +39,10 @@ class DCM(object):
     def time_accurate(self):
         return self.__time_accurate
 
+    @property
+    def time(self):
+        return self.pde.time.current_time
+
     def read_mesh(self,filename):
         if self.dimension != 0:
             self.model.domain.options.dimension = self.dimension
@@ -297,7 +301,7 @@ class DCM(object):
         self.__time_accurate = state['time_accurate']
         self.max_cfl = state.get('max_cfl',1.)
         self.cfl = state['cfl']
-        self.time = state['time']
+        self.begin_time = state['time']
         self.iteration = state['iteration']
         self.bcs = state['bcs']
         
