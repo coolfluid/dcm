@@ -122,6 +122,8 @@ class DCM(object):
             
             self.interpolate_solution(prev_pde.solution,self.pde.solution)
             
+            prev_pde.delete_component()
+            
         else:            
             self.order=order
             self.riemann_solver=riemann_solver
