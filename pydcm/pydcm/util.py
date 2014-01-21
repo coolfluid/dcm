@@ -85,32 +85,37 @@ class Definitions(object):
             return eval(var)
             
 def log(*args):
-    if cf.Core.rank() == 0:
-        print(" ".join([str(arg) for arg in args]))
+    if cf.env.only_cpu0_writes == True :
+        if cf.Core.rank() == 0:
+            print(" ".join([str(arg) for arg in args]))
+    else :
+        print("["+str(cf.Core.rank())+"] "+" ".join([str(arg) for arg in args]))
     
 def write(obj,filename):
     if cf.Core.rank() == 0:
-        pickle.dump( obj, open(filename, 'w') )        
+        pickle.dump( obj, open(filename, 'w') )
+    cf.Core.barrier()
     
 def read(filename):
-    return pickle.load( open( filename, 'r' ) )
+    return pickle.load( open(filename, 'r') )
     
 def symlink(src,dest):
+    import os
+    if os.path.exists( dest ):
+        if cf.Core.rank() == 0:
+            os.remove(dest)
+            
     if cf.Core.rank() == 0:
-        import os, errno
-        try: 
-            os.symlink(src, dest) 
-        except OSError, e: 
-            if e.errno == errno.EEXIST: 
-                os.remove(dest) 
-                os.symlink(src, dest)
+        os.symlink(src, dest)
+    cf.Core.barrier()
             
 def mkdir(dir):
-    if cf.Core.rank() == 0:
-        import os, errno 
-        try: 
-            os.mkdir(dir) 
-        except OSError, e: 
-            if e.errno == errno.EEXIST: 
-                return
-            raise OSError,str(e)
+    import os, errno 
+    if not os.path.isdir( dir ):
+        if cf.Core.rank() == 0:
+            try:
+                os.mkdir(dir)
+            except OSError, e: 
+                raise OSError,str(e)
+    cf.Core.barrier()
+        
