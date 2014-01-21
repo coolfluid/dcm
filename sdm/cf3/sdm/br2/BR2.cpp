@@ -36,7 +36,7 @@ BR2Builder<navierstokes::RightHandSide2D>  ns_rhs2d("cf3.sdm.br2.navierstokes_Ri
 BR2Builder<navierstokes::Convection2D>     ns_conv2d ("cf3.sdm.br2.navierstokes_Convection2D");
 BR2Builder<navierstokes::Diffusion2D>      ns_diff2d ("cf3.sdm.br2.navierstokes_Diffusion2D");
 
-BR2Builder<lineuler::RightHandSide2D>           lee_rhs2d("cf3.sdm.br2.lineuler_RightHandSide2D");
+BR2Builder<lineuler::RightHandSide2D>          lee_rhs2d("cf3.sdm.br2.lineuler_RightHandSide2D");
 BR2Builder<lineuler::SourceMonopoleUniform2D>  lee_monopole_uniform2d("cf3.sdm.br2.lineuler_SourceMonopoleUniform2D");
 BR2Builder<lineuler::SourceMonopoleUniform3D>  lee_monopole_uniform3d("cf3.sdm.br2.lineuler_SourceMonopoleUniform3D");
 

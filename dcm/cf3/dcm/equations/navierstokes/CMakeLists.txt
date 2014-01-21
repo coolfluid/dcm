@@ -3,6 +3,8 @@
 list( APPEND coolfluid_dcm_equations_navierstokes_files
   BCWall.hpp
   BCWall.cpp
+  ComputePrimitiveVariables.hpp
+  ComputePrimitiveVariables.cpp
   LibNavierStokes.hpp
   LibNavierStokes.cpp
   NavierStokes1D.hpp
