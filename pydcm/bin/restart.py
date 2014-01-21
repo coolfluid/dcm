@@ -36,6 +36,8 @@ if args.cfl:
 
 sim.solver.convergence_level = 1e-6
 
+from time import gmtime, strftime
 while True:
+    log("Started Computations at "+strftime("%Y-%m-%d %H:%M:%S", gmtime()))
     sim.propagate( iterations=args.save )
     save(sim)
