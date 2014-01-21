@@ -7,6 +7,7 @@ class NavierStokes(DCM):
     def __init__(self,name='navierstokes',dimension=0):
         super(NavierStokes, self).__init__(name,dimension)
         self.pde_type = 'cf3.dcm.equations.navierstokes.NavierStokes'
+        self.turb_stats_count = -1 # neg value means OFF
                         
     def ref_solution(self):
         rho  = self.value('rhoref')
@@ -82,10 +83,38 @@ class NavierStokes(DCM):
         log( "kinematic viscosity =",self.value('nu') )
         log( "heat conductivity =",self.value('kappa') )
 
-    def __getstate__(self):
-        state = super(NavierStokes,self).__getstate__()
-        return state
+
+    def set_post_iteration(self):
+        if self.turb_stats_count >= 0:
+            self.setup_turbulence_statistics(self.turb_stats_count)
+    
+    def setup_turbulence_statistics(self,count):
         
+        log('Continue turbulence_statistics at count '+str(self.turb_stats_count))
+        post_iteration = self.model.get_child('post_iteration')
+        if (not post_iteration):    
+            post_iteration = self.model.create_component("post_iteration","cf3.common.ActionDirector")
+
+        self.solver.options.post_iteration = post_iteration
+
+        compute_prim_vars = post_iteration.get_child('compute_primitive_variables')
+        if (not compute_prim_vars):
+            compute_prim_vars = post_iteration.create_component("compute_primitive_variables",
+                "cf3.dcm.equations.navierstokes.ComputePrimitiveVariables")
+        compute_prim_vars.gamma = self.value('gamma')
+        compute_prim_vars.R = self.value('R')
+        compute_prim_vars.solution = self.pde.fields.solution
+
+        self.turb_stats = post_iteration.get_child('compute_turbulence_statistics')
+        if (not self.turb_stats):
+            self.turb_stats = post_iteration.create_component('compute_turbulence_statistics',
+                'cf3.solver.actions.TurbulenceStatistics')
+        self.turb_stats.variable_name = 'U'
+        self.turb_stats.region = self.mesh.topology
+        self.turb_stats.options.count = count
+        print "set count to ", self.turb_stats.options.count
+
+
     def postprocessing(self):
 
         density = self.pde.fields.get_child('density')
@@ -141,3 +170,22 @@ class NavierStokes(DCM):
             S[0] = (p[0]/rho[0]**g-Sref)/Sref;
             Pt[0] = p[0]+0.5*rho[0]*U2;
             Tt[0] = T[0]*(1.+((g-1.)/2.))*M[0]**2;
+
+        compute_cfl = self.model.tools.get_child('compute_cfl')
+        if ( not compute_cfl ):
+            compute_cfl = self.model.tools.create_component('compute_cfl','cf3.solver.ComputeCFL')
+
+        compute_cfl.wave_speed = self.pde.fields.wave_speed
+        compute_cfl.time_step = self.pde.fields.dt
+        compute_cfl.execute()
+
+    def __getstate__(self):
+        state = super(NavierStokes, self).__getstate__()
+        if ( hasattr(self,'turb_stats') ) :
+            state['turb_stats_count'] = self.turb_stats.options.count
+            log('turb_stats_count = '+str(state['turb_stats_count']))
+        return state
+
+    def __setstate__(self,state):
+        super(NavierStokes, self).__setstate__(state)
+        self.turb_stats_count = state.get('turb_stats_count', -1)

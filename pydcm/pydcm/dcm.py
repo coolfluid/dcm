@@ -199,6 +199,11 @@ class DCM(object):
         self.solver.children.time_step_computer.time_accurate = self.__time_accurate
         self.solver.children.history.file = cf.URI(self.name+'_history.tsv')
         
+        self.set_post_iteration()
+
+    def set_post_iteration(self):
+        pass
+
     def save_bc(self,name,type,regions,**keyword_args):
         self.bcs.append( [name,type,regions,keyword_args] )
     
