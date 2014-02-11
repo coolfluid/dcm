@@ -84,10 +84,12 @@ class DCM(object):
         else:
             fields_uri = []
             for field in fields:
-                if ( self.pde.fields.get_child(field) ):
+                if ( self.pde.fields.get_child(field) != None ):
                     fields_uri.append( self.pde.fields.get_child(field).uri() )
+                elif (self.pde.bdry_fields.get_child(field) != None ):
+                    fields_uri.append( self.pde.bdry_fields.get_child(field).uri() )
                 else:
-                    raise RuntimeError, "Could not find field "+field
+                    raise RuntimeError, "Could not find field "+field+" in "+str(self.pde.fields)
             self.mesh.write_mesh(file=cf.URI(filename), fields=fields_uri)
             
         

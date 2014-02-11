@@ -8,6 +8,7 @@ class NavierStokes(DCM):
         super(NavierStokes, self).__init__(name,dimension)
         self.pde_type = 'cf3.dcm.equations.navierstokes.NavierStokes'
         self.turb_stats_count = -1 # neg value means OFF
+        self.bdry_layer_regions = ['.']
                         
     def ref_solution(self):
         rho  = self.value('rhoref')
@@ -92,13 +93,13 @@ class NavierStokes(DCM):
         
         log('Continue turbulence_statistics at count '+str(self.turb_stats_count))
         post_iteration = self.model.get_child('post_iteration')
-        if (not post_iteration):    
+        if (post_iteration is None):
             post_iteration = self.model.create_component("post_iteration","cf3.common.ActionDirector")
 
         self.solver.options.post_iteration = post_iteration
 
         compute_prim_vars = post_iteration.get_child('compute_primitive_variables')
-        if (not compute_prim_vars):
+        if (compute_prim_vars is None):
             compute_prim_vars = post_iteration.create_component("compute_primitive_variables",
                 "cf3.dcm.equations.navierstokes.ComputePrimitiveVariables")
         compute_prim_vars.gamma = self.value('gamma')
@@ -106,47 +107,46 @@ class NavierStokes(DCM):
         compute_prim_vars.solution = self.pde.fields.solution
 
         self.turb_stats = post_iteration.get_child('compute_turbulence_statistics')
-        if (not self.turb_stats):
+        if (self.turb_stats is None):
             self.turb_stats = post_iteration.create_component('compute_turbulence_statistics',
                 'cf3.solver.actions.TurbulenceStatistics')
         self.turb_stats.variable_name = 'U'
         self.turb_stats.region = self.mesh.topology
         self.turb_stats.options.count = count
-        print "set count to ", self.turb_stats.options.count
 
 
     def postprocessing(self):
 
         density = self.pde.fields.get_child('density')
-        if( not density ):
+        if( density is None ):
             density = self.pde.fields.create_field(name='density',variables='rho')
 
         velocity = self.pde.fields.get_child('velocity')
-        if( not velocity ):
+        if( velocity is None ):
             velocity = self.pde.fields.create_field(name='velocity',variables='U[v]')
 
         pressure = self.pde.fields.get_child('pressure')
-        if( not pressure ):
+        if( pressure is None ):
             pressure = self.pde.fields.create_field(name='pressure',variables='p')
 
         temperature = self.pde.fields.get_child('temperature')
-        if( not temperature ):
+        if( temperature is None ):
             temperature = self.pde.fields.create_field(name='temperature',variables='T')
 
         mach = self.pde.fields.get_child('mach')
-        if( not mach ):
+        if( mach is None ):
             mach = self.pde.fields.create_field(name='mach',variables='M')
 
         entropy = self.pde.fields.get_child('entropy')
-        if( not entropy ):
+        if( entropy is None ):
             entropy = self.pde.fields.create_field(name='entropy',variables='S')
 
         total_pressure = self.pde.fields.get_child('total_pressure')
-        if( not total_pressure ):
+        if( total_pressure is None ):
             total_pressure = self.pde.fields.create_field(name='total_pressure',variables='Pt')
 
         total_temperature = self.pde.fields.get_child('total_temperature')
-        if( not total_temperature ):
+        if( total_temperature is None ):
             total_temperature = self.pde.fields.create_field(name='total_temperature',variables='Tt')
 
 
@@ -172,20 +172,51 @@ class NavierStokes(DCM):
             Tt[0] = T[0]*(1.+((g-1.)/2.))*M[0]**2;
 
         compute_cfl = self.model.tools.get_child('compute_cfl')
-        if ( not compute_cfl ):
+        if ( compute_cfl is None ):
             compute_cfl = self.model.tools.create_component('compute_cfl','cf3.solver.ComputeCFL')
 
         compute_cfl.wave_speed = self.pde.fields.wave_speed
         compute_cfl.time_step = self.pde.fields.dt
         compute_cfl.execute()
 
+        #self.bdry_layer_regions = ['cylinder']
+        bdry_layer_fields = self.pde.bdry_fields
+    
+        tau_w = bdry_layer_fields.get_child('wall_shear_stress')
+        if( tau_w is None ):
+            tau_w = bdry_layer_fields.create_field(name='wall_shear_stress',variables='tau_w')
+         
+        yplus = bdry_layer_fields.get_child('yplus')
+        if( yplus is None ):
+            yplus = bdry_layer_fields.create_field(name='yplus',variables='yplus')
+
+        ustar = bdry_layer_fields.get_child('ustar')
+        if( ustar is None ):
+            ustar = bdry_layer_fields.create_field(name='ustar',variables='ustar')
+        
+        compute_boundary_layer = self.model.tools.get_child('compute_boundary_layer')
+        if ( compute_boundary_layer is None ):
+            compute_boundary_layer = self.model.tools.create_component('compute_boundary_layer','cf3.dcm.equations.navierstokes.ComputeBoundaryLayer')
+        compute_boundary_layer.velocity = self.pde.fields.velocity
+        compute_boundary_layer.density = self.pde.fields.density
+        compute_boundary_layer.nu = self.value('nu')
+        compute_boundary_layer.y0 = self.value('y0')
+        compute_boundary_layer.wall_regions = [ self.mesh.topology.access_component(str(reg)) for reg in self.bdry_layer_regions ]
+        compute_boundary_layer.yplus = yplus
+        compute_boundary_layer.tau = tau_w
+        compute_boundary_layer.ustar = ustar
+        compute_boundary_layer.execute()
+        log("y-plus: between "+str(compute_boundary_layer.yplus_min)+" and "+str(compute_boundary_layer.yplus_max) )
+
     def __getstate__(self):
         state = super(NavierStokes, self).__getstate__()
         if ( hasattr(self,'turb_stats') ) :
             state['turb_stats_count'] = self.turb_stats.options.count
             log('turb_stats_count = '+str(state['turb_stats_count']))
+        state['bdry_layer_regions'] = self.bdry_layer_regions
         return state
 
     def __setstate__(self,state):
         super(NavierStokes, self).__setstate__(state)
         self.turb_stats_count = state.get('turb_stats_count', -1)
+        self.bdry_layer_regions = state.get('bdry_layer_regions',['.'])

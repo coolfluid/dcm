@@ -11,6 +11,7 @@ parser.add_argument('--iteration', type=int, help='Iteration to restart from (de
 parser.add_argument('--save', type=int, help='Save solution every SAVE iterations (default=1000)', default=1000)
 parser.add_argument('-o', '--order', type=int, help='Change the order of simulation')
 parser.add_argument('--cfl', type=int, help='Change the CFL number gradually to this number')
+parser.add_argument('--statistics',help='Start averaging turbulence statistics from zero', action='store_true')
 args = parser.parse_args()
 
 
@@ -33,6 +34,10 @@ if args.order:
 
 if args.cfl:
     sim.set_cfl('if(cfl<=0,1,min('+str(args.cfl)+',cfl*1.01))')
+
+if args.statistics:
+    sim.turb_stats_count = 0
+    sim.set_post_iteration()
 
 sim.solver.convergence_level = 1e-6
 

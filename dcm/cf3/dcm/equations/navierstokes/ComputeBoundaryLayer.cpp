@@ -106,7 +106,6 @@ void ComputeBoundaryLayer::execute()
   const Real R = options().value<Real>("R");
   Field::ArrayT& U   = m_velocity->array();
   Field::ArrayT& rho = m_density->array();
-  Field::ArrayT& walldist = m_walldistance->array();
 
   Real nu = options().value<Real>("nu"); // kinematic viscosity
   Real y0 = options().value<Real>("y0"); // walldistance
@@ -133,6 +132,7 @@ void ComputeBoundaryLayer::execute()
       for (Uint f=0; f<nb_faces; ++f)
       {
         connected->compute_face(faces, f);
+        if ( !connected->is_bdry_face() ) continue;
         cf3_always_assert( connected->is_bdry_face() );
         Cells& cells = *connected->cells()[0].comp->handle<Cells>();
         const Uint cell_idx = connected->cells()[0].idx;
@@ -213,15 +213,8 @@ void ComputeBoundaryLayer::execute()
     options().set("yplus_min",yplus_min);
     options().set("yplus_max",yplus_max);
   }
-  // 2) Compute primitive variables in inner cells
 
-  // 3) At wall: compute gradients of temperature and velocity
-      
-  // 4) Compute dynamic viscosity mu at wall using vars and grads
-  
-  // 4) Get density from vars
-  
-  // 5) Compute skin friction tau at wall
+  // Compute skin friction tau at wall
      /*
       if (dim == DIM_2D)
       {  

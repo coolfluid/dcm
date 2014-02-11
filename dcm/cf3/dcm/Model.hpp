@@ -73,6 +73,9 @@ public: // signals
   void signal_create_space( common::SignalArgs& args);
   void signature_create_space( common::SignalArgs& args);
 
+  void signal_create_bdry_space( common::SignalArgs& args);
+  void signature_create_bdry_space( common::SignalArgs& args);
+
   void signal_build_faces( common::SignalArgs& args);
   void signature_build_faces( common::SignalArgs& args);
 

@@ -69,6 +69,9 @@ sim.init_solution(
     '0',
     'rhoref*Eref' )
 
+sim.define( y0 = 0.0025 )
+sim.bdry_layer_regions = ['cylinder']
+
 while True:
     sim.propagate(iterations=1000)
     save(sim)

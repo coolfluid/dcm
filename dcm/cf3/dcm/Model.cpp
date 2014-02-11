@@ -94,6 +94,12 @@ Model::Model ( const std::string& name  ) :
       .connect   ( boost::bind ( &Model::signal_create_space,    this, _1 ) )
       .signature ( boost::bind ( &Model::signature_create_space, this, _1 ) );
 
+  regist_signal ( "create_bdry_space" )
+      .description( "Create SD space in boundaries" )
+      .pretty_name("Create SD space" )
+      .connect   ( boost::bind ( &Model::signal_create_bdry_space,    this, _1 ) )
+      .signature ( boost::bind ( &Model::signature_create_bdry_space, this, _1 ) );
+
   regist_signal( "build_faces" )
       .description( "Build faces in all meshes in the domain")
       .pretty_name("Build faces")
@@ -284,6 +290,32 @@ void Model::signal_create_space( common::SignalArgs& args)
 ////////////////////////////////////////////////////////////////////////////////
 
 void Model::signature_create_space( common::SignalArgs& args )
+{
+  common::XML::SignalOptions opts(args);
+  opts.add("name",std::string("pde"));
+  opts.add("shape_function",std::string("cf3.dcm.core.LegendreGaussEndP1"));
+  opts.add("regions",std::vector< Handle<Component> >(1,m_domain->handle()));
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+void Model::signal_create_bdry_space( common::SignalArgs& args)
+{
+  common::XML::SignalOptions opts(args);
+
+  Handle<Dictionary> space = create_bdry_space(
+      opts.value<std::string>("name"),
+      opts.value<std::string>("shape_function"),
+      opts.value< std::vector< Handle<Component> > >("regions") );
+
+  common::XML::SignalFrame reply = args.create_reply(uri());
+  SignalOptions reply_options(reply);
+  reply_options.add("created_component",space->uri());
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+void Model::signature_create_bdry_space( common::SignalArgs& args )
 {
   common::XML::SignalOptions opts(args);
   opts.add("name",std::string("pde"));
