@@ -13,6 +13,8 @@
 
 #include "cf3/dcm/equations/lineuler/RightHandSide2D.hpp"
 #include "cf3/dcm/equations/lineuler/SourceMonopoleUniform.hpp"
+#include "cf3/dcm/equations/lineuler/SourceDipole.hpp"
+#include "cf3/dcm/equations/lineuler/SourceQuadrupole.hpp"
 
 namespace cf3 {
 namespace dcm {
@@ -22,7 +24,9 @@ namespace lineuler {
 typedef boost::mpl::vector<
   RightHandSide2D,
   SourceMonopoleUniform2D,
-  SourceMonopoleUniform3D
+  SourceMonopoleUniform3D,
+  SourceDipole2D,
+  SourceQuadrupole2D
 > Terms;
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -1,6 +1,8 @@
 # coolfluid_dcm_lineuler
 
 list( APPEND coolfluid_dcm_equations_lineuler_files
+  BC.hpp
+  BC.cpp
   BCExtrapolation.hpp
   BCExtrapolation.cpp
   BCFarfield.hpp
@@ -15,6 +17,10 @@ list( APPEND coolfluid_dcm_equations_lineuler_files
   LinEuler2D.cpp
   SourceMonopoleUniform.hpp
   SourceMonopoleUniform.cpp
+  SourceDipole.hpp
+  SourceDipole.cpp
+  SourceQuadrupole.hpp
+  SourceQuadrupole.cpp
   RightHandSide2D.hpp
   RightHandSide2D.cpp
   InitAcousticPulse.hpp
@@ -29,18 +35,10 @@ coolfluid_mark_not_orphan(
   BCWallNoSlip2D.cpp
   BCWallNonUniformMeanflow2D.hpp
   BCWallNonUniformMeanflow2D.cpp
-  ConvectionNonUniformMeanflow2D.hpp
-  ConvectionNonUniformMeanflow2D.cpp
   Convection3D.hpp
   Convection3D.cpp
   FixMeanFlowBoundaryLayer.hpp
   FixMeanFlowBoundaryLayer.cpp
-  SourceMeanflow2D.hpp
-  SourceMeanflow2D.cpp
-  SourceDipole2D.hpp
-  SourceDipole2D.cpp
-  SourceQuadrupole2D.hpp
-  SourceQuadrupole2D.cpp
 )
 
 coolfluid3_add_library( TARGET  coolfluid_dcm_equations_lineuler 

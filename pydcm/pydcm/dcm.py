@@ -33,6 +33,7 @@ class DCM(object):
         self.riemann_solver = 'Roe'
         self.cfl = 1.
         self.bcs = []
+        self.terms = []
         self.pde = None
        
     @property 
@@ -214,6 +215,14 @@ class DCM(object):
         region_comps = [ self.mesh.topology.access_component(str(reg)) for reg in regions ]                
         bc = self.pde.add_bc( name=name, type=type, regions=region_comps )
         return bc
+
+    def save_term(self,name,type, **keyword_args):
+        self.terms.append( [name,type,keyword_args] )
+
+    def add_term(self, name, type, **keyword_args ):
+        self.save_term(name,type,**keyword_args)        
+        term = self.pde.add_term( name=name, type=type )
+        return term
 
     def set_cfl(self, expression):
         self.solver.children.time_step_computer.cfl = expression

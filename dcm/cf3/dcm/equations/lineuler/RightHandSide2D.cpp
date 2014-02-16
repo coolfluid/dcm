@@ -94,21 +94,22 @@ void RightHandSide2D::get_bdry_variables( const mesh::Space& space,
   boost_foreach( Uint n, interpolation.used_points() )
   {
     const Real L = interpolation.coeff(n);
+
+    // Interpolate boundary solution
     for (Uint eq=0; eq<NEQS; ++eq)
     {
       vars[eq]      += L * bdry_solution()->array()[nodes[n]][eq];
     }
+
+    // Interpolate boundary back ground
     for (Uint eq=0; eq<NEQS; ++eq)
     {
       vars[NEQS+eq] += L * m_bdry_background->array()[nodes[n]][eq];
     }
 
   }
-  //vars[NEQS+0] = m_rho0;
-  //vars[NEQS+1] = m_U0[XX];
-  //vars[NEQS+2] = m_U0[YY];
-  //vars[NEQS+3] = m_p0;
 
+  // Background gradient
   for (Uint eq=0; eq<NEQS; ++eq)
   {
     for (Uint d=0; d<NDIM; ++d)
@@ -135,9 +136,6 @@ void RightHandSide2D::compute_phys_data( const ColVector_NDIM& coords,
   phys_data.U0[YY] = vars[NEQS+2];
   phys_data.p0     = vars[NEQS+3];
   phys_data.c0=std::sqrt(phys_data.gamma*phys_data.p0/phys_data.rho0);
-
-  cf3_always_assert_desc(common::to_str(phys_data.rho0),std::abs(phys_data.rho0-1.) < 1e-7);
-  cf3_always_assert_desc(common::to_str(phys_data.p0),std::abs(phys_data.p0-1.) < 1e-7);
 
   if( ENABLE_SOURCE )
   {

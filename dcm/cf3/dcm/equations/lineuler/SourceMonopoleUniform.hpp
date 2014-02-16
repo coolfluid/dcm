@@ -80,8 +80,6 @@ private: // functions
   Real f(const ColVector_NDIM& coord);
 
 private:
-  
-  Real m_source;                      ///< dummy variable
 
   Real m_alpha;                       ///< Width of monopole
   Real m_eps;                         ///< Amplitude of monopole
@@ -153,8 +151,6 @@ private: // functions
   Real f(const ColVector_NDIM& coord);
 
 private:
-  
-  Real m_source;                      ///< dummy variable
 
   Real m_alpha;                       ///< Width of monopole
   Real m_eps;                         ///< Amplitude of monopole

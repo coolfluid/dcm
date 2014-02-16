@@ -55,18 +55,18 @@ SourceMonopoleUniform2D::SourceMonopoleUniform2D( const std::string& name )
       .mark_basic()
       .description("Frequency");
 
-  options().add("source_location",m_source_loc)
+  options().add("location",m_source_loc)
       .link_to(&m_source_loc)
       .mark_basic()
       .description("Source location");
   
-  options().add("alpha",m_alpha)
+  options().add("width",m_alpha)
       .link_to(&m_alpha)
       .mark_basic()
       .description("Source width");
   
   
-  options().add("epsilon",m_eps)
+  options().add("amplitude",m_eps)
       .link_to(&m_eps)
       .mark_basic()
       .description("Source amplitude");
@@ -100,12 +100,12 @@ void SourceMonopoleUniform2D::compute_source( const DATA& p, RowVector_NEQS& sou
   // time
   const Real& t = m_time->current_time();
 
-  m_source = f(p.coords) * sin(omega*t);
+  const Real rho = f(p.coords) * sin(omega*t);
 
-  source[0] = m_source;
+  source[0] = rho;
   source[1] = 0.;
   source[2] = 0.;
-  source[3] = p.c02 * m_source; 
+  source[3] = p.c02 * rho;
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -146,18 +146,18 @@ SourceMonopoleUniform3D::SourceMonopoleUniform3D( const std::string& name )
       .mark_basic()
       .description("Frequency");
 
-  options().add("source_location",m_source_loc)
+  options().add("location",m_source_loc)
       .link_to(&m_source_loc)
       .mark_basic()
       .description("Source location");
   
-  options().add("alpha",m_alpha)
+  options().add("width",m_alpha)
       .link_to(&m_alpha)
       .mark_basic()
       .description("Source width");
   
   
-  options().add("epsilon",m_eps)
+  options().add("amplitude",m_eps)
       .link_to(&m_eps)
       .mark_basic()
       .description("Source amplitude");
@@ -191,13 +191,13 @@ void SourceMonopoleUniform3D::compute_source( const DATA& p, RowVector_NEQS& sou
   // time
   const Real& t = m_time->current_time();
 
-  m_source = f(p.coords) * sin(omega*t);
+  const Real rho = f(p.coords) * sin(omega*t);
 
-  source[0] = m_source;
+  source[0] = rho;
   source[1] = 0.;
   source[2] = 0.;
   source[3] = 0.;
-  source[4] = p.c02 * m_source; 
+  source[4] = p.c02 * rho;
 }
 
 /////////////////////////////////////////////////////////////////////////////

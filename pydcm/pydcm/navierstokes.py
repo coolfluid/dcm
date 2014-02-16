@@ -179,7 +179,6 @@ class NavierStokes(DCM):
         compute_cfl.time_step = self.pde.fields.dt
         compute_cfl.execute()
 
-        #self.bdry_layer_regions = ['cylinder']
         bdry_layer_fields = self.pde.bdry_fields
     
         tau_w = bdry_layer_fields.get_child('wall_shear_stress')

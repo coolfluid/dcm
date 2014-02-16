@@ -22,6 +22,54 @@ class LinearizedEuler(DCM):
         self.pde.gamma = self.value('gamma')
         self.pde.add_term( name='rhs', type='cf3.sdm.br2.lineuler_RightHandSide'+str(self.dimension)+'D')
     
+    def add_term(self, name, type, **keyword_args ):
+        self.save_term(name,type,**keyword_args)
+        if (type == 'Monopole'):
+            term_computer_type = 'cf3.sdm.br2.lineuler_SourceMonopoleUniform'+str(self.dimension)+'D'
+            term_computer = self.pde.add_term( name=name, type=term_computer_type )
+            term = term_computer.term
+            if ('rho0' in keyword_args):
+                term.options.rho0 = self.value( str(keyword_args['rho0']) )
+            if ('p0' in keyword_args):
+                term.options.p0 = self.value( str(keyword_args['p0']) )            
+            if ('freq' in keyword_args):
+                term.options.freq = self.value( str(keyword_args['freq']) )
+            if ('location' in keyword_args):
+                term.options.location = [self.value( str(x) ) for x in keyword_args['location'] ]
+            if ('width' in keyword_args):
+                term.options.width = self.value( str(keyword_args['width']) )
+            if ('amplitude' in keyword_args):
+                term.options.amplitude = self.value( str(keyword_args['amplitude']) )
+        if (type == 'Dipole'):
+            term_computer_type = 'cf3.sdm.br2.lineuler_SourceDipole'+str(self.dimension)+'D'
+            term_computer = self.pde.add_term( name=name, type=term_computer_type )
+            term = term_computer.term
+            if ('freq' in keyword_args):
+                term.options.freq = self.value( str(keyword_args['freq']) )
+            if ('location' in keyword_args):
+                term.options.location = [self.value( str(x) ) for x in keyword_args['location'] ]
+            if ('width' in keyword_args):
+                term.options.width = self.value( str(keyword_args['width']) )
+            if ('amplitude' in keyword_args):
+                term.options.amplitude = self.value( str(keyword_args['amplitude']) )
+            if ('angle' in keyword_args):
+                term.options.angle = self.value( str(keyword_args['angle']) )
+        if (type == 'Quadrupole'):
+            term_computer_type = 'cf3.sdm.br2.lineuler_SourceQuadrupole'+str(self.dimension)+'D'
+            term_computer = self.pde.add_term( name=name, type=term_computer_type )
+            term = term_computer.term
+            if ('freq' in keyword_args):
+                term.options.freq = self.value( str(keyword_args['freq']) )
+            if ('location' in keyword_args):
+                term.options.location = [self.value( str(x) ) for x in keyword_args['location'] ]
+            if ('width' in keyword_args):
+                term.options.width = self.value( str(keyword_args['width']) )
+            if ('amplitude' in keyword_args):
+                term.options.amplitude = self.value( str(keyword_args['amplitude']) )
+            if ('angle' in keyword_args):
+                term.options.angle = self.value( str(keyword_args['angle']) )
+        return term
+    
     def add_bc(self, name, type, regions, **keyword_args ):
         self.save_bc(name,type,regions,**keyword_args)        
         
@@ -40,7 +88,7 @@ class LinearizedEuler(DCM):
             bc = self.pde.add_bc( name=name, type=bc_type, regions=region_comps )
 
         elif (type == 'Thompson' ):
-            bc_type = 'cf3.sdmx.equations.lineuler.BCThompsonUniform'+str(self.dimension)+'D'
+            bc_type = 'cf3.sdmx.equations.lineuler.BCThompson'+str(self.dimension)+'D'
             bc = self.pde.add_bc( name=name, type=bc_type, regions=region_comps )
 
         elif (type == 'NonReflecting' ):

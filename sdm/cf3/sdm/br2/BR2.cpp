@@ -39,6 +39,8 @@ BR2Builder<navierstokes::Diffusion2D>      ns_diff2d ("cf3.sdm.br2.navierstokes_
 BR2Builder<lineuler::RightHandSide2D>          lee_rhs2d("cf3.sdm.br2.lineuler_RightHandSide2D");
 BR2Builder<lineuler::SourceMonopoleUniform2D>  lee_monopole_uniform2d("cf3.sdm.br2.lineuler_SourceMonopoleUniform2D");
 BR2Builder<lineuler::SourceMonopoleUniform3D>  lee_monopole_uniform3d("cf3.sdm.br2.lineuler_SourceMonopoleUniform3D");
+BR2Builder<lineuler::SourceDipole2D>           lee_dipole2d("cf3.sdm.br2.lineuler_SourceDipole2D");
+BR2Builder<lineuler::SourceQuadrupole2D>       lee_quadrupole2d("cf3.sdm.br2.lineuler_SourceQuadrupole2D");
 
 } // br2
 } // sdm

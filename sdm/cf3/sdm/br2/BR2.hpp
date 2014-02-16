@@ -653,32 +653,40 @@ void BR2<TERM>::compute_term(const Uint elem_idx, std::vector<RealVector>& term,
 
     for (Uint sol_pt=0; sol_pt<m_nb_sol_pts; ++sol_pt)
     {
-      m_sol_pt_vars[sol_pt].setZero();
+      if (TERM::NVAR)
+      {
+        m_sol_pt_vars[sol_pt].setZero();
+      }
       if (TERM::NGRAD)
       {
         m_sol_pt_gradvars[sol_pt].setZero();
         m_sol_pt_gradvars_grad[sol_pt].setZero();
       }
-      for (Uint d=0; d<NDIM; ++d)
+      if (TERM::NVAR || TERM::NGRAD)
       {
-        boost_foreach( Uint flx_pt, m_metrics->line_interpolation_from_flx_pts_to_sol_pt(sol_pt,d).used_points() )
+        for (Uint d=0; d<NDIM; ++d)
         {
-          const Real C     = m_metrics->line_interpolation_from_flx_pts_to_sol_pt(sol_pt,d).coeff(flx_pt);
-          const Real C_avg = C / static_cast<Real>(NDIM);
-          for (Uint v=0; v<NVAR; ++v)
+          boost_foreach( Uint flx_pt, m_metrics->line_interpolation_from_flx_pts_to_sol_pt(sol_pt,d).used_points() )
           {
-            m_sol_pt_vars[sol_pt][v] += m_avg_flx_pt_vars[flx_pt][v] * C_avg;
-          }
-          for (Uint v=0; v<NGRAD; ++v)
-          {
-            m_sol_pt_gradvars[sol_pt][v]        += C_avg * m_avg_flx_pt_gradvars[flx_pt][v];
-            m_sol_pt_gradvars_grad[sol_pt](d,v) += C     * m_avg_flx_pt_gradvars_grad[flx_pt](d,v);
+            const Real C     = m_metrics->line_interpolation_from_flx_pts_to_sol_pt(sol_pt,d).coeff(flx_pt);
+            const Real C_avg = C / static_cast<Real>(NDIM);
+            for (Uint v=0; v<NVAR; ++v)
+            {
+              m_sol_pt_vars[sol_pt][v] += m_avg_flx_pt_vars[flx_pt][v] * C_avg;
+            }
+            for (Uint v=0; v<NGRAD; ++v)
+            {
+              m_sol_pt_gradvars[sol_pt][v]        += C_avg * m_avg_flx_pt_gradvars[flx_pt][v];
+              m_sol_pt_gradvars_grad[sol_pt](d,v) += C     * m_avg_flx_pt_gradvars_grad[flx_pt](d,v);
+            }
           }
         }
       }
-      // Transform interpolated gradient in solution points to X,Y,Z coordinates
-      m_sol_pt_gradvars_grad[sol_pt] = m_element_metrics->sol_pt_Jinv(sol_pt) * m_sol_pt_gradvars_grad[sol_pt];
-
+      if (TERM::NGRAD)
+      {
+        // Transform interpolated gradient in solution points to X,Y,Z coordinates
+        m_sol_pt_gradvars_grad[sol_pt] = m_element_metrics->sol_pt_Jinv(sol_pt) * m_sol_pt_gradvars_grad[sol_pt];
+      }
       m_term->compute_phys_data( /*in*/  m_element_metrics->sol_pt_coords(sol_pt),
                                  /*in*/  m_sol_pt_vars[sol_pt],
                                  /*in*/  m_sol_pt_gradvars[sol_pt],
