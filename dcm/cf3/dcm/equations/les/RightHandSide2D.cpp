@@ -11,23 +11,22 @@
 #include "cf3/mesh/Space.hpp"
 #include "cf3/mesh/Field.hpp"
 #include "cf3/mesh/Reconstructions.hpp"
-#include "cf3/dcm/equations/les/Smagorinsky2D.hpp"
+#include "cf3/dcm/equations/les/RightHandSide2D.hpp"
+#include "cf3/dcm/equations/les/EddyViscosityModel.hpp"
 
 namespace cf3 {
 namespace dcm {
 namespace equations {
 namespace les {
 
-common::ComponentBuilder<Smagorinsky2D,solver::Term,LibLES> Smagorinsky2D_builder;
+common::ComponentBuilder<RightHandSide2D,solver::Term,LibLES> RightHandSide2D_builder;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-Smagorinsky2D::Smagorinsky2D( const std::string& name ) :
+RightHandSide2D::RightHandSide2D( const std::string& name ) :
   solver::TermBase<2,4,5,3>(name),
-  m_riemann_solver_type("Roe"),
-  m_PrT(0.9),
-  m_Cs(0.18),
-  m_Cv(0.094),
+  m_riemann_solver_type("Rusanov"),
+  m_sfs_model_type("WALE"),
   m_gamma(1.4),
   m_kappa(2.601e-2),
   m_mu(1.806e-5),
@@ -40,29 +39,22 @@ Smagorinsky2D::Smagorinsky2D( const std::string& name ) :
       .description("Gas constant")
       .mark_basic();
   options().add("riemann_solver",m_riemann_solver_type).link_to(&m_riemann_solver_type)
-      .description("Riemann solver")
-      .attach_trigger( boost::bind( &Smagorinsky2D::config_riemann_solver, this) );
+      .description("Riemann solver (e.g. Rusanov)")
+      .attach_trigger( boost::bind( &RightHandSide2D::config_riemann_solver, this) );
   config_riemann_solver();
+  options().add("sfs_model",m_sfs_model_type).link_to(&m_sfs_model_type)
+      .description("Sub-filter-scale model (e.g. Smagorinsky)")
+      .attach_trigger( boost::bind( &RightHandSide2D::config_sfs_model, this) );
+  config_sfs_model();
   options().add("kappa",m_kappa).link_to(&m_kappa)
       .description("Heat conduction")
       .mark_basic();
   options().add("mu",m_mu).link_to(&m_mu)
       .description("Dynamic viscosity")
       .mark_basic();
-
-  // Subfilter scale parameters to tune
-  options().add("PrT",m_PrT).link_to(&m_PrT)
-      .description("Turbulent Prandtl number")
-      .mark_basic();
-  options().add("Cs",m_Cs).link_to(&m_Cs)
-      .description("Smagorinsky constant")
-      .mark_basic();
-  options().add("Cv",m_Cv).link_to(&m_Cv)
-      .description("Deardorff/Yoshizawa constant")
-      .mark_basic();
 }
 
-void Smagorinsky2D::get_variables( const mesh::Space& space,
+void RightHandSide2D::get_variables( const mesh::Space& space,
                                    const Uint elem_idx,
                                    const ColVector_NDIM& coords,
                                    const mesh::ReconstructPoint& interpolation,
@@ -122,7 +114,7 @@ void Smagorinsky2D::get_variables( const mesh::Space& space,
   gradvars_grad = jacobian_inverse * gradvars_grad;
 }
 
-void Smagorinsky2D::get_bdry_variables( const mesh::Space& space,
+void RightHandSide2D::get_bdry_variables( const mesh::Space& space,
                                   const Uint elem_idx,
                                   const ColVector_NDIM& coords,
                                   const mesh::ReconstructPoint& interpolation,
@@ -185,7 +177,7 @@ void Smagorinsky2D::get_bdry_variables( const mesh::Space& space,
   gradvars_grad.col(2) = _grad_T;
 }
 
-void Smagorinsky2D::set_phys_data_constants( DATA& phys_data )
+void RightHandSide2D::set_phys_data_constants( DATA& phys_data )
 {
   phys_data.gamma=m_gamma;
   phys_data.R=m_R;
@@ -197,7 +189,7 @@ void Smagorinsky2D::set_phys_data_constants( DATA& phys_data )
   phys_data.PrT = m_PrT;
 }
 
-void Smagorinsky2D::compute_phys_data( const ColVector_NDIM& coords,
+void RightHandSide2D::compute_phys_data( const ColVector_NDIM& coords,
                                        const RowVector_NVAR& vars,
                                        const RowVector_NGRAD& gradvars,
                                        const Matrix_NDIMxNGRAD& gradvars_grad,
@@ -208,35 +200,22 @@ void Smagorinsky2D::compute_phys_data( const ColVector_NDIM& coords,
   p.grad_u = gradvars_grad.col(0);
   p.grad_v = gradvars_grad.col(1);
   p.grad_T = gradvars_grad.col(2);
-
-  return;
   p.Delta  = vars[4];
 
-  // Strain rate tensor
-  Real Sxx = p.grad_u[XX];
-  Real Sxy = 0.5*(p.grad_u[YY]+p.grad_v[XX]);
-  Real Syy = p.grad_v[YY];
+  _grad_U.col(0) = p.grad_u;
+  _grad_U.col(1) = p.grad_v;
 
-  // Absolute strain rate tensor
-  Real SijSij = Sxx*Sxx + Syy*Syy + 2*Sxy*Sxy;
-  Real absS = std::sqrt( 2.* SijSij);
+  m_sfs_model->compute(p.rho, p.U, _grad_U, p.Delta);
 
-  // Eddy viscosity computed by Smagorinsky model
-  p.nuT = std::pow(p.Delta*p.Cs, 2)*absS;
-  p.muT = p.rho*p.nuT;
-
-  // SFS thermal conductivity
-  p.kappaT = p.muT/p.PrT;
-
-  // Subfilterscale kinetic energy model by Yoshizawa, Deardorff
-  p.k_sfs = std::pow( p.nuT/(p.Cv*p.Delta) , 2);
+  p.nuT    = m_sfs_model->sfs_viscosity();
+  p.kappaT = m_sfs_model->sfs_heat_conduction();
+  p.k_sfs  = m_sfs_model->sfs_kinetic_energy();
+  p.muT    = p.rho*p.nuT;
 }
 
-void Smagorinsky2D::compute_diffusive_flux( const DATA &p, const ColVector_NDIM &normal,
+void RightHandSide2D::compute_diffusive_flux( const DATA &p, const ColVector_NDIM &normal,
                                             RowVector_NEQS &flux, Real &wave_speed )
 {
-  physics::navierstokes::navierstokes2d::compute_diffusive_flux(p,normal,flux,wave_speed);
-  return;
   const Real& nx = normal[XX];
   const Real& ny = normal[YY];
 
@@ -251,7 +230,7 @@ void Smagorinsky2D::compute_diffusive_flux( const DATA &p, const ColVector_NDIM 
   Real tau_yy = mu*(2.*p.grad_v[YY] - two_third_divergence_U) - two_third_rho_ksfs;
   Real tau_xy = mu*(p.grad_u[YY] + p.grad_v[XX]);
 
-  // Heat flux + SFS heat flus
+  // Heat flux + SFS heat flux
   Real kappa = p.kappa + p.kappaT;
   Real heat_flux = -kappa*(p.grad_T[XX]*nx + p.grad_T[YY]*ny);
 
@@ -265,7 +244,7 @@ void Smagorinsky2D::compute_diffusive_flux( const DATA &p, const ColVector_NDIM 
 }
 
 
-void Smagorinsky2D::config_riemann_solver()
+void RightHandSide2D::config_riemann_solver()
 {
   std::string builder_name = m_riemann_solver_type;
   if (! boost::algorithm::starts_with(builder_name,"cf3." ) )
@@ -273,6 +252,16 @@ void Smagorinsky2D::config_riemann_solver()
   if (m_riemann_solver) remove_component(*m_riemann_solver);
   m_riemann_solver = create_component("riemann_solver",builder_name)->handle< solver::RiemannSolver<cf3::physics::euler::euler2d::Data,NDIM,NEQS> >();
 }
+
+void RightHandSide2D::config_sfs_model()
+{
+  std::string builder_name = m_sfs_model_type;
+  if (! boost::algorithm::starts_with(builder_name,"cf3." ) )
+    builder_name = "cf3.dcm.equations.les."+builder_name;
+  if (m_sfs_model) remove_component(*m_sfs_model);
+  m_sfs_model = create_component("sfs_model",builder_name)->handle< EddyViscosityModel >();
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 } // les

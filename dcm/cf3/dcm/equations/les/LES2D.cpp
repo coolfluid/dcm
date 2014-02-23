@@ -47,20 +47,23 @@ LES2D::LES2D ( const std::string& name  ) :
       .mark_basic()
       .description("Gas constant");
   options().add("kappa",2.601e-2)
-      .description("Heat conduction")
+      .description("Thermal conduction")
       .mark_basic();
   options().add("mu",1.806e-5)
       .description("Dynamic viscosity")
       .mark_basic();
-  options().add("riemann_solver",std::string("Roe"))
+  options().add("riemann_solver",std::string("Rusanov"))
       .mark_basic()
       .description("Riemann Solver");
+  options().add("sfs_model",std::string("WALE"))
+      .mark_basic()
+      .description("Sub-filter-scale model");
+
 
   m_nb_dim = 2;
   m_nb_eqs = 4;
 
   add_time();
-  add_term("smagorinsky","cf3.dcm.equations.les.LESSmagorinsky2D");
 }
 
 ////////////////////////////////////////////////////////////////////////////////

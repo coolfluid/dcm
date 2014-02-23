@@ -11,6 +11,7 @@
 #include "cf3/dcm/equations/euler/Terms.hpp"
 #include "cf3/dcm/equations/navierstokes/Terms.hpp"
 #include "cf3/dcm/equations/lineuler/Terms.hpp"
+#include "cf3/dcm/equations/les/Terms.hpp"
 #include "cf3/common/OptionList.hpp"
 
 using namespace cf3::dcm::equations;
@@ -41,6 +42,8 @@ BR2Builder<lineuler::SourceMonopoleUniform2D>  lee_monopole_uniform2d("cf3.sdm.b
 BR2Builder<lineuler::SourceMonopoleUniform3D>  lee_monopole_uniform3d("cf3.sdm.br2.lineuler_SourceMonopoleUniform3D");
 BR2Builder<lineuler::SourceDipole2D>           lee_dipole2d("cf3.sdm.br2.lineuler_SourceDipole2D");
 BR2Builder<lineuler::SourceQuadrupole2D>       lee_quadrupole2d("cf3.sdm.br2.lineuler_SourceQuadrupole2D");
+
+BR2Builder<les::RightHandSide2D>  les_rhs2d("cf3.sdm.br2.les_RightHandSide2D");
 
 } // br2
 } // sdm

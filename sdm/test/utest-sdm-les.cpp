@@ -39,7 +39,8 @@
 #include "cf3/solver/Time.hpp"
 #include "cf3/solver/TimeStepping.hpp"
 #include "cf3/solver/TimeStepComputer.hpp"
-#include "cf3/dcm/equations/les/Smagorinsky2D.hpp"
+#include "cf3/dcm/equations/les/EddyViscosityModel.hpp"
+#include "cf3/dcm/equations/les/RightHandSide2D.hpp"
 #include "cf3/dcm/equations/navierstokes/RightHandSide2D.hpp"
 
 using namespace boost;
@@ -95,25 +96,24 @@ BOOST_AUTO_TEST_CASE( init_mpi )
 BOOST_AUTO_TEST_CASE( test_les_2d )
 {
 
-  Handle<Smagorinsky2D> smagorinsky  = Core::instance().root().create_component<Smagorinsky2D>("smagorinsky");
-  Handle<navierstokes::RightHandSide2D> navierstokes = Core::instance().root().create_component<navierstokes::RightHandSide2D>("navierstokes");
+  Handle<les::RightHandSide2D> les  = Core::instance().root().create_component<les::RightHandSide2D>("les_rhs");
+  Handle<navierstokes::RightHandSide2D> navierstokes = Core::instance().root().create_component<navierstokes::RightHandSide2D>("ns_rhs");
 
-  Smagorinsky2D::DATA p_les;
-  smagorinsky->set_phys_data_constants(p_les);
-  BOOST_CHECK_EQUAL( p_les.R,  287.05);
-  BOOST_CHECK_EQUAL( p_les.gamma,  1.4);
-  BOOST_CHECK_EQUAL( p_les.kappa,  2.601e-2);
-  BOOST_CHECK_EQUAL( p_les.mu,  1.806e-5);
-  BOOST_CHECK_EQUAL( p_les.PrT,  0.9);
-  BOOST_CHECK_EQUAL( p_les.Cs,  0.18);
-  BOOST_CHECK_EQUAL( p_les.Cv,  0.094);
+  const Real tol_pct = 1.e-5;
+
+  les::RightHandSide2D::DATA p_les;
+  les->set_phys_data_constants(p_les);
+  BOOST_CHECK_CLOSE( p_les.R,  287.05, tol_pct);
+  BOOST_CHECK_CLOSE( p_les.gamma,  1.4, tol_pct);
+  BOOST_CHECK_CLOSE( p_les.kappa,  2.601e-2, tol_pct);
+  BOOST_CHECK_CLOSE( p_les.mu,  1.806e-5, tol_pct);
 
   navierstokes::RightHandSide2D::DATA p_ns;
   navierstokes->set_phys_data_constants(p_ns);
-  BOOST_CHECK_EQUAL( p_ns.R,  287.05);
-  BOOST_CHECK_EQUAL( p_ns.gamma,  1.4);
-  BOOST_CHECK_EQUAL( p_ns.kappa,  2.601e-2);
-  BOOST_CHECK_EQUAL( p_ns.mu,  1.806e-5);
+  BOOST_CHECK_CLOSE( p_ns.R,  287.05, tol_pct);
+  BOOST_CHECK_CLOSE( p_ns.gamma,  1.4, tol_pct);
+  BOOST_CHECK_CLOSE( p_ns.kappa,  2.601e-2, tol_pct);
+  BOOST_CHECK_CLOSE( p_ns.mu,  1.806e-5, tol_pct);
 
   navierstokes::RightHandSide2D::RowVector_NEQS solution, flux_les, flux_ns;
   navierstokes::RightHandSide2D::ColVector_NDIM normal;
@@ -124,11 +124,12 @@ BOOST_AUTO_TEST_CASE( test_les_2d )
   p_ns.compute_from_conservative(solution);
   p_les.compute_from_conservative(solution);
 
-  smagorinsky->compute_convective_flux(p_les, normal, flux_les, ws_les );
+  les->compute_convective_flux(p_les, normal, flux_les, ws_les );
   navierstokes->compute_convective_flux(p_ns, normal, flux_ns, ws_ns );
 
   BOOST_CHECK_EQUAL( flux_les, flux_ns);
   BOOST_CHECK_EQUAL( ws_les, ws_ns);
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////

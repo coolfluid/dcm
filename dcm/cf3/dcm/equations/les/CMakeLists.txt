@@ -5,8 +5,13 @@ list( APPEND coolfluid_dcm_equations_les_files
   LibLES.cpp
   LES2D.hpp
   LES2D.cpp
-  Smagorinsky2D.hpp
-  Smagorinsky2D.cpp
+  EddyViscosityModel.hpp
+  EddyViscosityModel.cpp
+  RightHandSide2D.hpp
+  RightHandSide2D.cpp
+  Terms.hpp
+  ComputeSubFilterScale.hpp
+  ComputeSubFilterScale.cpp
 )
 
 coolfluid3_add_library( TARGET  coolfluid_dcm_equations_les

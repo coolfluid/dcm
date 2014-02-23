@@ -4,8 +4,8 @@
 // GNU Lesser General Public License version 3 (LGPLv3).
 // See doc/lgpl.txt and doc/gpl.txt for the license text.
 
-#ifndef cf3_dcm_equations_les_Smagorinsky2D_hpp
-#define cf3_dcm_equations_les_Smagorinsky2D_hpp
+#ifndef cf3_dcm_equations_les_RightHandSide2D_hpp
+#define cf3_dcm_equations_les_RightHandSide2D_hpp
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -21,6 +21,13 @@ namespace cf3 {
   namespace mesh {
     class Field;
   }
+  namespace dcm {
+    namespace equations {
+      namespace les {
+        class EddyViscosityModel;
+      }
+    }
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -32,17 +39,17 @@ namespace les {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class dcm_equations_les_API Smagorinsky2D : public solver::TermBase< 2 /*dim*/, 4 /*eqs*/, 5 /*vars*/, 3/*grads*/ >
+class dcm_equations_les_API RightHandSide2D : public solver::TermBase< 2 /*dim*/, 4 /*eqs*/, 5 /*vars*/, 3/*grads*/ >
 {
 public: 
 
   /// @brief Constructor
-  Smagorinsky2D( const std::string& name );
+  RightHandSide2D( const std::string& name );
   
   /// @brief Destructor
-  virtual ~Smagorinsky2D() {}
+  virtual ~RightHandSide2D() {}
   
-  static std::string type_name() { return "LESSmagorinsky2D"; }
+  static std::string type_name() { return "LESRightHandSide2D"; }
   
 public: // types
 
@@ -53,7 +60,7 @@ public: // types
   {
     
     Real PrT;               ///< Turbulent Prandtl number      ( 0.7 - 0.9 )
-    Real Cs;                ///< Smagorinsky constant          ( 0.1 < Cs < 0.24 )
+    Real Cs;                ///< RightHandSide constant          ( 0.1 < Cs < 0.24 )
     Real Cv;                ///< Deardorff/Yoshizawa constant  ( 0.094 )
     Real k_sfs;
     Real nuT;
@@ -125,10 +132,16 @@ private:
 
   void config_riemann_solver();
 
+  void config_sfs_model();
+
 private: // configuration
 
   Handle< solver::RiemannSolver<cf3::physics::euler::euler2d::Data,NDIM,NEQS> > m_riemann_solver;
   std::string m_riemann_solver_type;
+
+  Handle< EddyViscosityModel > m_sfs_model;
+  std::string m_sfs_model_type;
+
   Real m_gamma;
   Real m_R;
   Real m_kappa;
@@ -152,6 +165,7 @@ private: // configuration
   ColVector_NDIM _grad_u;
   ColVector_NDIM _grad_v;
   ColVector_NDIM _grad_T;
+  Matrix_NDIMxNDIM _grad_U;
 
 };
 
@@ -164,4 +178,4 @@ private: // configuration
 
 ////////////////////////////////////////////////////////////////////////////////
 
-#endif // cf3_dcm_equations_les_Smagorinsky2D_hpp
+#endif // cf3_dcm_equations_les_RightHandSide2D_hpp

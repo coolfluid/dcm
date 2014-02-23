@@ -127,7 +127,9 @@ class DCM(object):
             self.set_time_accurate(self.time_accurate)
             
             self.interpolate_solution(prev_pde.solution,self.pde.solution)
-            
+
+            prev_pde.fields.delete_component()
+            prev_pde.bdry_fields.delete_component()
             prev_pde.delete_component()
             
         else:            

@@ -18,6 +18,7 @@
 from advection_diffusion   import AdvectionDiffusion
 from euler                 import Euler
 from navierstokes          import NavierStokes
+from les                   import LES
 from lineuler              import LinearizedEuler
 from case                  import save, restart
 from util                  import log
