@@ -226,7 +226,7 @@ Handle<mesh::Dictionary> Model::create_bdry_space(const std::string& name, const
   CFinfo << "Creating Disontinuous boundary space " << dict->uri() << " ("<<space_lib_name<<") for entities" << CFendl;
   boost_foreach(const Handle<Component>& comp, regions)
   {
-    boost_foreach(Faces& entities, find_components_recursively<Faces>( *comp ) )
+    boost_foreach(Faces& entities, find_components_recursively_with_tag<Faces>( *comp , mesh::Tags::bdry_faces () ) )
     {
       CFinfo << "    -  " <<  entities.uri() << CFendl;
       entities.create_space(space_lib_name+"."+entities.element_type().shape_name(),*dict);
